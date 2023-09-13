@@ -1,0 +1,8 @@
+# This is an example config variables, please copy this file as .env for your config. 
+# alternatively you can set these variables in your environment 
+
+# Discord webhook url 
+DISCORD_WEBHOOK=https://discord.com/api/webhooks/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# Print all message from start of session ?
+# BURST_MSG=True

@@ -3,6 +3,9 @@ import json
 import asyncio
 import websockets
 import urllib.parse
+import os
+from dotenv import load_dotenv
+from discordwebhook import Discord
 
 livetimingUrl = "https://livetiming.formula1.com/signalr"
 websocketUrl = "wss://livetiming.formula1.com/signalr"
@@ -23,6 +26,11 @@ def negotiate():
         print("error")
 
 async def connectRaceControl():
+
+    discord = Discord(
+        url=os.getenv("DISCORD_WEBHOOK")
+    )
+
     data, headers = negotiate()
     params = urllib.parse.urlencode({
         "clientProtocol": 1.5,
@@ -44,28 +52,75 @@ async def connectRaceControl():
                     {
                         "H": "Streaming",
                         "M": "Subscribe",
-                        # "A": [["RaceControlMessages", "TrackStatus", "ExtrapolatedClock", "DriverList", "SessionInfo", "LapCount"]],,
-                        "A": [["RaceControlMessages", "TrackStatus"]],
+                        # "A": [["Heartbeat", "CarData.z", "Position.z", "ExtrapolatedClock", "TopThree", "RcmSeries","TimingStats", "TimingAppData","WeatherData", "TrackStatus", "DriverList", "RaceControlMessages", "SessionInfo", "SessionData", "LapCount", "TimingData"]],
+                        "A": [["RaceControlMessages", "TrackStatus", "WeatherData" ]],
                         "I": 1
                     }
                 )
             )
-        except:
-            print("subscription failed!");
+
+            skipRaceControlMessages = (os.getenv('BURST_MSG') != "True") 
+
+            while message := await sock.recv() :
+                message = json.loads(message)
+                print(json.dumps(message,indent=4))
+
+                # post TrackStatus
+                if "R" in message and "TrackStatus" in message["R"] :
+                    discord.post(
+                        username="Track Condition",
+                        embeds=[
+                            {
+                                "title": message['R']['TrackStatus']['Message'],
+                                "fields": [
+                                    { "name": key, "value": value , "inline": True }
+                                    for key, value in message['R']['TrackStatus'].items() if not key in ["Message", "_kf"]
+                                ]
+                            }
+                        ]
+                    )
+
+                # post weather data
+                if "R" in message and "WeatherData" in message["R"] :
+                    discord.post(
+                        username="Mr. Weather",
+                        embeds=[
+                            {
+                                "title": "Weather Report",
+                                "fields": [
+                                    { "name": key, "value": value , "inline": True }
+                                    for key, value in message["R"]["WeatherData"].items() if key != "_kf"
+                                ]
+                            }
+                        ]
+                    )
+                
+                # post Race Control Message
+                if "R" in message and "RaceControlMessages" in message["R"] :
+                    # [ discord.post(content=item["Message"], username="Mikey") for item in message["R"]["RaceControlMessages"]["Messages"] if not skipRaceControlMessages ]
+                    [
+                        discord.post(
+                            username="Mikey",
+                            embeds=[
+                                {
+                                    "title": RCMessage["Message"],
+                                    "fields": [
+                                        { "name": key, "value": value, "inline": True }
+                                        for key, value in RCMessage.items() if not key in ["Message", "Utc"]
+                                    ]
+                                }
+                            ]
+                        )
+                        for RCMessage in message["R"]["RaceControlMessages"]["Messages"] if not skipRaceControlMessages
+                    ]
+                    skipRaceControlMessages=False
+
+        except Exception as error:
+            print(error)
             return
 
-        while True:
-            try:
-                message = await sock.recv()
-                print(json.dumps(
-                    json.loads(message),
-                    indent=4
-                ))
-            except websockets.exceptions.ConnectionClosed:
-                print("WebSocket connection closed.")
-                break
-
 def main():
+    load_dotenv()
     asyncio.get_event_loop().run_until_complete(connectRaceControl())
 
 if __name__ == "__main__":

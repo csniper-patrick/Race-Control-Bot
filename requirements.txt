@@ -1,3 +1,5 @@
 requests
 asyncio
 websockets
+discordwebhook
+python-dotenv
