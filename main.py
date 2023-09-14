@@ -61,11 +61,13 @@ async def connectRaceControl():
 
             skipRaceControlMessages = (os.getenv('BURST_MSG') != "True") 
             skipTrackStatus = (os.getenv('BURST_MSG') != "True") 
-            skipWeatherData = (os.getenv('BURST_MSG') != "True") 
+            skipWeatherData = (os.getenv('BURST_MSG') != "True")
+            verbose = (os.getenv('VERBOSE') == "True") 
 
             while message := await sock.recv() :
                 message = json.loads(message)
-                print(json.dumps(message,indent=4))
+                if verbose and bool(message): 
+                    print(json.dumps(message,indent=4))
 
                 # post TrackStatus
                 if "R" in message and "TrackStatus" in message["R"] :
