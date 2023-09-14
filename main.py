@@ -60,6 +60,8 @@ async def connectRaceControl():
             )
 
             skipRaceControlMessages = (os.getenv('BURST_MSG') != "True") 
+            skipTrackStatus = (os.getenv('BURST_MSG') != "True") 
+            skipWeatherData = (os.getenv('BURST_MSG') != "True") 
 
             while message := await sock.recv() :
                 message = json.loads(message)
@@ -67,40 +69,43 @@ async def connectRaceControl():
 
                 # post TrackStatus
                 if "R" in message and "TrackStatus" in message["R"] :
-                    discord.post(
-                        username="Track Condition",
-                        embeds=[
-                            {
-                                "title": message['R']['TrackStatus']['Message'],
-                                "fields": [
-                                    { "name": key, "value": value , "inline": True }
-                                    for key, value in message['R']['TrackStatus'].items() if not key in ["Message", "_kf"]
-                                ]
-                            }
-                        ]
-                    )
+                    if not skipTrackStatus:
+                        discord.post(
+                            username="賽道狀況 (Alpha)",
+                            embeds=[
+                                {
+                                    "title": message['R']['TrackStatus']['Message'],
+                                    "fields": [
+                                        { "name": key, "value": value , "inline": True }
+                                        for key, value in message['R']['TrackStatus'].items() if not key in ["Message", "_kf"]
+                                    ]
+                                }
+                            ]
+                        )
+                    skipTrackStatus = False
 
                 # post weather data
                 if "R" in message and "WeatherData" in message["R"] :
-                    discord.post(
-                        username="Mr. Weather",
-                        embeds=[
-                            {
-                                "title": "Weather Report",
-                                "fields": [
-                                    { "name": key, "value": value , "inline": True }
-                                    for key, value in message["R"]["WeatherData"].items() if key != "_kf"
-                                ]
-                            }
-                        ]
-                    )
+                    if not skipWeatherData:
+                        discord.post(
+                            username="天氣先生 (Alpha)",
+                            embeds=[
+                                {
+                                    "title": "Weather Report",
+                                    "fields": [
+                                        { "name": key, "value": value , "inline": True }
+                                        for key, value in message["R"]["WeatherData"].items() if key != "_kf"
+                                    ]
+                                }
+                            ]
+                        )
+                    skipWeatherData = False
                 
                 # post Race Control Message
                 if "R" in message and "RaceControlMessages" in message["R"] :
-                    # [ discord.post(content=item["Message"], username="Mikey") for item in message["R"]["RaceControlMessages"]["Messages"] if not skipRaceControlMessages ]
                     [
                         discord.post(
-                            username="Mikey",
+                            username="Mikey Masi (Alpha)",
                             embeds=[
                                 {
                                     "title": RCMessage["Message"],
