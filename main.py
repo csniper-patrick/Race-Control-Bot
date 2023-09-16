@@ -53,7 +53,7 @@ async def connectRaceControl():
                         "H": "Streaming",
                         "M": "Subscribe",
                         # "A": [["Heartbeat", "CarData.z", "Position.z", "ExtrapolatedClock", "TopThree", "RcmSeries","TimingStats", "TimingAppData","WeatherData", "TrackStatus", "DriverList", "RaceControlMessages", "SessionInfo", "SessionData", "LapCount", "TimingData"]],
-                        "A": [["RaceControlMessages", "TrackStatus", "WeatherData", "Heartbeat", "ExtrapolatedClock" ]],
+                        "A": [["RaceControlMessages", "TrackStatus"]],
                         "I": 1
                     }
                 )
@@ -64,64 +64,46 @@ async def connectRaceControl():
             skipWeatherData = (os.getenv('BURST_MSG') != "True")
             verbose = (os.getenv('VERBOSE') == "True") 
 
-            while message := await sock.recv() :
-                message = json.loads(message)
-                if verbose and bool(message): 
-                    print(json.dumps(message,indent=4))
+            while messages := await sock.recv() :
+                messages = json.loads(messages)
+                if verbose and bool(messages): 
+                    print(json.dumps(messages,indent=4))
 
-                # post TrackStatus
-                if "R" in message and "TrackStatus" in message["R"] :
-                    if not skipTrackStatus:
-                        discord.post(
-                            username="賽道狀況 (Alpha)",
-                            embeds=[
-                                {
-                                    "title": message['R']['TrackStatus']['Message'],
-                                    "fields": [
-                                        { "name": key, "value": value , "inline": True }
-                                        for key, value in message['R']['TrackStatus'].items() if not key in ["Message", "_kf"]
+                # process live data
+                if "M" in messages:
+                    for msg in messages["M"] :
+                        if msg["H"] == "Streaming":
+                            # Post Track Status
+                            if msg["A"][0] == "TrackStatus":
+                                discord.post(
+                                    username="賽道狀況 (Alpha)",
+                                    embeds=[
+                                        {
+                                            "title": msg["A"][1]['Message'],
+                                            "fields": [
+                                            { "name": key, "value": value , "inline": True }
+                                            for key, value in msg["A"][1].items() if not key in ["Message", "_kf"]
+                                            ]
+                                        }
                                     ]
-                                }
-                            ]
-                        )
-                    skipTrackStatus = False
-
-                # post weather data
-                if "R" in message and "WeatherData" in message["R"] :
-                    if not skipWeatherData:
-                        discord.post(
-                            username="天氣先生 (Alpha)",
-                            embeds=[
-                                {
-                                    "title": "Weather Report",
-                                    "fields": [
-                                        { "name": key, "value": value , "inline": True }
-                                        for key, value in message["R"]["WeatherData"].items() if key != "_kf"
-                                    ]
-                                }
-                            ]
-                        )
-                    skipWeatherData = False
-                
-                # post Race Control Message
-                if "R" in message and "RaceControlMessages" in message["R"] :
-                    [
-                        discord.post(
-                            username="Mikey Masi (Alpha)",
-                            embeds=[
-                                {
-                                    "title": RCMessage["Message"],
-                                    "fields": [
-                                        { "name": key, "value": value, "inline": True }
-                                        for key, value in RCMessage.items() if not key in ["Message", "Utc"]
-                                    ]
-                                }
-                            ]
-                        )
-                        for RCMessage in message["R"]["RaceControlMessages"]["Messages"] if not skipRaceControlMessages
-                    ]
-                    skipRaceControlMessages=False
-
+                                )
+                            # Post Race Control Message
+                            if msg["A"][0] == "RaceControlMessages":
+                                [
+                                    discord.post(
+                                        username="Mikey Masi (Alpha)",
+                                        embeds=[
+                                            {
+                                                "title": content["Message"],
+                                                "fields": [
+                                                    { "name": key, "value": value, "inline": True }
+                                                    for key, value in content.items()
+                                                ]
+                                            }
+                                        ]
+                                    ) 
+                                    for msg_key, content in msg["A"][1]["Messages"].items()
+                                ]
         except Exception as error:
             print(error)
             return
