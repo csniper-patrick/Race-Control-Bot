@@ -102,7 +102,7 @@ async def connectRaceControl():
                                             }
                                         ]
                                     ) 
-                                    for msg_key, content in msg["A"][1]["Messages"]
+                                    for content in msg["A"][1]["Messages"]
                                 ]
         except Exception as error:
             print(error)
