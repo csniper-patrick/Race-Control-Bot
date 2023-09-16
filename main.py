@@ -89,6 +89,12 @@ async def connectRaceControl():
                                 )
                             # Post Race Control Message
                             if msg["A"][0] == "RaceControlMessages":
+                                RCMessages=msg["A"][1]["Messages"]
+                                if type(RCMessages == 'dict'):
+                                    RCMessages=[
+                                        value
+                                        for key, value in RCMessages.items()
+                                    ]
                                 [
                                     discord.post(
                                         username="Mikey Masi (Alpha)",
@@ -102,7 +108,7 @@ async def connectRaceControl():
                                             }
                                         ]
                                     ) 
-                                    for msg_key, content in msg["A"][1]["Messages"].items()
+                                    for content in RCMessages
                                 ]
         except Exception as error:
             print(error)
