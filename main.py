@@ -97,7 +97,7 @@ async def connectRaceControl():
                                                 "title": content["Message"],
                                                 "fields": [
                                                     { "name": key, "value": value, "inline": True }
-                                                    for key, value in content.items() if not key in ["Message"]
+                                                    for key, value in content if not key in ["Message"]
                                                 ]
                                             }
                                         ]
