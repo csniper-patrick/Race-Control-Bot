@@ -5,7 +5,7 @@ import websockets
 import urllib.parse
 import os
 from dotenv import load_dotenv
-from discordwebhook import Discord
+from messageManager import *
 
 livetimingUrl = "https://livetiming.formula1.com/signalr"
 websocketUrl = "wss://livetiming.formula1.com/signalr"
@@ -26,10 +26,6 @@ def negotiate():
         print("error")
 
 async def connectRaceControl():
-
-    discord = Discord(
-        url=os.getenv("DISCORD_WEBHOOK")
-    )
 
     data, headers = negotiate()
     params = urllib.parse.urlencode({
@@ -58,58 +54,22 @@ async def connectRaceControl():
                     }
                 )
             )
+            verbose = (os.getenv('VERBOSE') == "True")
 
-            skipRaceControlMessages = (os.getenv('BURST_MSG') != "True") 
-            skipTrackStatus = (os.getenv('BURST_MSG') != "True") 
-            skipWeatherData = (os.getenv('BURST_MSG') != "True")
-            verbose = (os.getenv('VERBOSE') == "True") 
+            manager = messageManager(os.getenv("DISCORD_WEBHOOK"))
 
             while messages := await sock.recv() :
                 messages = json.loads(messages)
                 if verbose and bool(messages): 
                     print(json.dumps(messages,indent=4))
-
+                
                 # process live data
                 if "M" in messages:
                     for msg in messages["M"] :
-                        if msg["H"] == "Streaming":
-                            # Post Track Status
-                            if msg["A"][0] == "TrackStatus":
-                                discord.post(
-                                    username="賽道狀況 (Alpha)",
-                                    embeds=[
-                                        {
-                                            "title": msg["A"][1]['Message'],
-                                            "fields": [
-                                            { "name": key, "value": value , "inline": True }
-                                            for key, value in msg["A"][1].items() if not key in ["Message", "_kf"]
-                                            ]
-                                        }
-                                    ]
-                                )
-                            # Post Race Control Message
-                            if msg["A"][0] == "RaceControlMessages":
-                                RCMessages=msg["A"][1]["Messages"]
-                                if type(RCMessages == 'dict'):
-                                    RCMessages=[
-                                        value
-                                        for key, value in RCMessages.items()
-                                    ]
-                                [
-                                    discord.post(
-                                        username="Mikey Masi (Alpha)",
-                                        embeds=[
-                                            {
-                                                "title": content["Message"],
-                                                "fields": [
-                                                    { "name": key, "value": value, "inline": True }
-                                                    for key, value in content.items() if not key in ["Message"]
-                                                ]
-                                            }
-                                        ]
-                                    ) 
-                                    for content in RCMessages
-                                ]
+                        if msg["H"] == "Streaming" and msg["A"][0] == "TrackStatus":
+                            manager.liveTrackStatusHandler(msg = msg)
+                        if msg["H"] == "Streaming" and msg["A"][0] == "RaceControlMessages":
+                            manager.liveRaceControlMessagesHandler( msg = msg )
         except Exception as error:
             print(error)
             return
