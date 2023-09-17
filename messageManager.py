@@ -4,6 +4,12 @@ class messageManager:
         self.discord = Discord(url=webhook)
         return
     
+    def referenceUpdate(self, msg):
+        if "DriverList" in msg:
+            self.driverList=msg["DriverList"]
+        if "SessionInfo" in msg:
+            self.sessionInfo=msg["SessionInfo"]
+
     def liveTrackStatusHandler(self, msg):
         self.discord.post(
             username="賽道狀況 (Alpha)",

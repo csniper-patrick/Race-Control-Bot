@@ -62,8 +62,12 @@ async def connectRaceControl():
                 messages = json.loads(messages)
                 if verbose and bool(messages): 
                     print(json.dumps(messages,indent=4))
-                
-                # process live data
+
+                # process reference data (R type)
+                if "R" in messages:
+                    manager.referenceUpdate(messages["R"])
+
+                # process live data (M type)
                 if "M" in messages:
                     for msg in messages["M"] :
                         if msg["H"] == "Streaming" and msg["A"][0] == "TrackStatus":
