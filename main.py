@@ -42,7 +42,7 @@ async def connectRaceControl():
     async with websockets.connect(f'{websocketUrl}/connect?{params}', extra_headers=extra_headers) as sock:
         try:
             initMsg = await sock.recv()
-            print(f"Received: {initMsg}")
+            print(json.dumps(json.loads(initMsg),indent=4))
             await sock.send(
                 json.dumps(
                     {

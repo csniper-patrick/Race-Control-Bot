@@ -22,7 +22,7 @@ class messageManager:
 
     def liveRaceControlMessagesHandler(self, msg):
         RCMessages=msg["A"][1]["Messages"]
-        if type(RCMessages) == 'dict' :
+        if type(RCMessages) == dict :
             RCMessages=[
                 value
                 for key, value in RCMessages.items()
@@ -35,7 +35,7 @@ class messageManager:
                         "title": content["Message"],
                         "fields": [
                             { "name": key, "value": value, "inline": True }
-                            for key, value in content.items() if key in ["Utc", "Sector", "RacingNumber", "Flag"]
+                            for key, value in content.items() if key in ["Sector", "RacingNumber", "Flag", "Mode"]
                         ]
                     }
                 ]
