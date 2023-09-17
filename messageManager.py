@@ -1,14 +1,37 @@
 from discordwebhook import Discord
+import json
 class messageManager:
     def __init__(self, webhook):
         self.discord = Discord(url=webhook)
         return
     
-    def referenceUpdate(self, msg):
+    def updateReference(self, msg):
         if "DriverList" in msg:
             self.driverList=msg["DriverList"]
+            # print(json.dumps(self.driverList, indent=4))
+            # self.pushDriverList()
         if "SessionInfo" in msg:
             self.sessionInfo=msg["SessionInfo"]
+    
+    def pushDriverList(self):
+        for number, info in self.driverList.items():
+            if type(info) is not dict: 
+                continue 
+            self.discord.post(
+                username=f"{info['FullName']} ({info['Tla']}) - {info['RacingNumber']}",
+                embeds=[
+                    {
+                        "fields": [
+                            {"name": key, "value": info[key], "inline": True}
+                            for key in ["TeamName", "CountryCode"]
+                        ],
+                        "color": int(info['TeamColour'], 16),
+                    }
+                ],
+                avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
+            )
+            
+        return
 
     def liveTrackStatusHandler(self, msg):
         self.discord.post(
@@ -42,3 +65,45 @@ class messageManager:
             ) 
             for content in RCMessages
         ]
+    
+    def liveTimingStatsHandler(self, msg):
+        # Post personal best when not in race / sprint
+        # Post overall best in any session.
+        timingStats = msg["A"][1]["Lines"]
+        if self.sessionInfo["Type"] in ["Practice", "Qualifying", "Sprint Shootout"]:
+            for RacingNumber, stat in timingStats.items():
+                if "PersonalBestLapTime" in stat and "Value" in stat["PersonalBestLapTime"]:
+                    info = self.driverList[RacingNumber]
+                    self.discord.post(
+                        username=f"{info['FullName']} ({info['Tla']}) - {info['RacingNumber']}",
+                        embeds=[
+                            {
+                                "title": "Overall Best" if stat["PersonalBestLapTime"]["Position"] == 1 else "Personal Best Lap",
+                                "fields": [
+                                    {"name": "Lap Time", "value": stat["PersonalBestLapTime"]["Value"]}
+                                ],
+                                # purple: 10181046
+                                # green: 5763719
+                                "color": 10181046 if stat["PersonalBestLapTime"]["Position"] == 1 else 5763719
+                            }
+                        ],
+                        avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
+                    )
+        elif self.sessionInfo["Type"] in ["Race", "Sprint"]:
+            for RacingNumber, stat in timingStats.items():
+                if "PersonalBestLapTime" in stat and "Value" in stat["PersonalBestLapTime"] and stat["PersonalBestLapTime"]["Position"] == 1:
+                    info = self.driverList[RacingNumber]
+                    self.discord.post(
+                        username=f"{info['FullName']} ({info['Tla']}) - {info['RacingNumber']}",
+                        embeds=[
+                            {
+                                "title": "Fastest Lap",
+                                "fields": [
+                                    {"name": "Lap Time", "value": stat["PersonalBestLapTime"]["Value"]}
+                                ],
+                                # purple: 10181046
+                                "color": 10181046
+                            }
+                        ],
+                        avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
+                    )

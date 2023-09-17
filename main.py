@@ -41,15 +41,13 @@ async def connectRaceControl():
     }
     async with websockets.connect(f'{websocketUrl}/connect?{params}', extra_headers=extra_headers) as sock:
         try:
-            initMsg = await sock.recv()
-            print(json.dumps(json.loads(initMsg),indent=4))
             await sock.send(
                 json.dumps(
                     {
                         "H": "Streaming",
                         "M": "Subscribe",
                         # "A": [["Heartbeat", "CarData.z", "Position.z", "ExtrapolatedClock", "TopThree", "RcmSeries","TimingStats", "TimingAppData","WeatherData", "TrackStatus", "DriverList", "RaceControlMessages", "SessionInfo", "SessionData", "LapCount", "TimingData"]],
-                        "A": [["RaceControlMessages", "TrackStatus"]],
+                        "A": [["RaceControlMessages", "TrackStatus", "DriverList", "TimingStats"]],
                         "I": 1
                     }
                 )
@@ -65,15 +63,16 @@ async def connectRaceControl():
 
                 # process reference data (R type)
                 if "R" in messages:
-                    manager.referenceUpdate(messages["R"])
-
+                    manager.updateReference(messages["R"])
                 # process live data (M type)
                 if "M" in messages:
                     for msg in messages["M"] :
                         if msg["H"] == "Streaming" and msg["A"][0] == "TrackStatus":
-                            manager.liveTrackStatusHandler(msg = msg)
+                            manager.liveTrackStatusHandler( msg = msg )
                         if msg["H"] == "Streaming" and msg["A"][0] == "RaceControlMessages":
                             manager.liveRaceControlMessagesHandler( msg = msg )
+                        if msg["H"] == "Streaming" and msg["A"][0] == "TimingStats":
+                            manager.liveTimingStatsHandler( msg = msg )
         except Exception as error:
             print(error)
             return
