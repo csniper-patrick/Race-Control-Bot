@@ -35,7 +35,7 @@ class messageManager:
                         "title": content["Message"],
                         "fields": [
                             { "name": key, "value": value, "inline": True }
-                            for key, value in content.items() if key in ["Sector", "RacingNumber", "Flag", "Mode"]
+                            for key, value in content.items() if key in ["Sector", "RacingNumber", "Flag", "Mode", "Lap", "Status"]
                         ]
                     }
                 ]
