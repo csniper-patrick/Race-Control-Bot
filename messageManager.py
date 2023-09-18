@@ -115,12 +115,12 @@ class messageManager:
                     )
 
     def liveTimingAppDataHandler(self, msg):
-        lineStats = msg["A"][1]["Lines"] if "Lines" in msg["A"][1] else None
+        lineStats = msg["A"][1]["Lines"]
         # Announce when race leader change
         if self.sessionInfo["Type"] in ["Race", "Sprint"] and lineStats :
             for RacingNumber, stat in lineStats : 
+                info = self.driverList[RacingNumber]
                 if stat["Line"] == 1 :
-                    info = self.driverList[RacingNumber]
                     self.discord.post(
                         username=f"{info['Tla']} - {info['RacingNumber']}",
                         embeds=[
@@ -135,3 +135,27 @@ class messageManager:
                         ],
                         avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
                     )
+                if "Stints" in stat:
+                    for stints, stintInfo in stat["Stints"]:
+                        if "New" in stintInfo:
+                            self.discord.post(
+                                username=f"{info['Tla']} - {info['RacingNumber']}",
+                                embeds=[
+                                    {
+                                        "title": "Tyre Change",
+                                        "fields": [
+                                            {"name": key, "value": stintInfo[key], "inline": True}
+                                            for key in ["Compound", "New"]
+                                        ],
+                                        # SOFT(RED): 15548997
+                                        # MEDIUM(YELLOW): 16776960
+                                        # HARD(WHITE): 16777215
+                                        # INTER(GREEN): 2067276
+                                        # WET(BLUE): 2123412
+                                        # "color": int(info['TeamColour'], 16),
+                                    }
+                                ],
+                                avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
+                            )
+                            
+
