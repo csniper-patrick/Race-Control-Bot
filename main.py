@@ -73,6 +73,9 @@ async def connectRaceControl():
                             manager.liveRaceControlMessagesHandler( msg = msg )
                         if msg["H"] == "Streaming" and msg["A"][0] == "TimingStats":
                             manager.liveTimingStatsHandler( msg = msg )
+                        # if msg["H"] == "Streaming" and msg["A"][0] == "TimingAppData":
+                        #     manager.liveTimingAppDataHandler( msg = msg )
+                        
         except Exception as error:
             print(error)
             return

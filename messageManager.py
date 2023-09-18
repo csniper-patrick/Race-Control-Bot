@@ -18,12 +18,13 @@ class messageManager:
             if type(info) is not dict: 
                 continue 
             self.discord.post(
-                username=f"{info['FullName']} ({info['Tla']}) - {info['RacingNumber']}",
+                # username=f"{info['FullName']} ({info['Tla']}) - {info['RacingNumber']}",
+                username=f"{info['Tla']} - {info['RacingNumber']}",
                 embeds=[
                     {
                         "fields": [
                             {"name": key, "value": info[key], "inline": True}
-                            for key in ["TeamName", "CountryCode"]
+                            for key in ["FullName", "TeamName", "CountryCode"]
                         ],
                         "color": int(info['TeamColour'], 16),
                     }
@@ -72,10 +73,12 @@ class messageManager:
         timingStats = msg["A"][1]["Lines"]
         if self.sessionInfo["Type"] in ["Practice", "Qualifying", "Sprint Shootout"]:
             for RacingNumber, stat in timingStats.items():
-                if "PersonalBestLapTime" in stat and "Value" in stat["PersonalBestLapTime"]:
+                if ( "PersonalBestLapTime" in stat and
+                     "Value" in stat["PersonalBestLapTime"] and
+                     stat["PersonalBestLapTime"]["Value"] != "" ):
                     info = self.driverList[RacingNumber]
                     self.discord.post(
-                        username=f"{info['FullName']} ({info['Tla']}) - {info['RacingNumber']}",
+                        username=f"{info['Tla']} - {info['RacingNumber']}",
                         embeds=[
                             {
                                 "title": "Overall Best" if stat["PersonalBestLapTime"]["Position"] == 1 else "Personal Best Lap",
@@ -91,10 +94,13 @@ class messageManager:
                     )
         elif self.sessionInfo["Type"] in ["Race", "Sprint"]:
             for RacingNumber, stat in timingStats.items():
-                if "PersonalBestLapTime" in stat and "Value" in stat["PersonalBestLapTime"] and stat["PersonalBestLapTime"]["Position"] == 1:
+                if ( "PersonalBestLapTime" in stat and
+                     "Value" in stat["PersonalBestLapTime"] and
+                     stat["PersonalBestLapTime"]["Value"] != "" and 
+                     stat["PersonalBestLapTime"]["Position"] == 1 ):
                     info = self.driverList[RacingNumber]
                     self.discord.post(
-                        username=f"{info['FullName']} ({info['Tla']}) - {info['RacingNumber']}",
+                        username=f"{info['Tla']} - {info['RacingNumber']}",
                         embeds=[
                             {
                                 "title": "Fastest Lap",
@@ -103,6 +109,28 @@ class messageManager:
                                 ],
                                 # purple: 10181046
                                 "color": 10181046
+                            }
+                        ],
+                        avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
+                    )
+
+    def liveTimingAppDataHandler(self, msg):
+        lineStats = msg["A"][1]["Lines"] if "Lines" in msg["A"][1] else None
+        # Announce when race leader change
+        if self.sessionInfo["Type"] in ["Race", "Sprint"] and lineStats :
+            for RacingNumber, stat in lineStats : 
+                if stat["Line"] == 1 :
+                    info = self.driverList[RacingNumber]
+                    self.discord.post(
+                        username=f"{info['Tla']} - {info['RacingNumber']}",
+                        embeds=[
+                            {
+                                "title": "Race Leader",
+                                "fields": [
+                                    {"name": key, "value": info[key], "inline": True}
+                                    for key in ["FullName", "TeamName", "CountryCode"]
+                                ],
+                                "color": int(info['TeamColour'], 16),
                             }
                         ],
                         avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
