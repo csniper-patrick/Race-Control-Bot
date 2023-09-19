@@ -1,5 +1,4 @@
 from discordwebhook import Discord
-import json
 class messageManager:
     def __init__(self, webhook):
         self.discord = Discord(url=webhook)
@@ -8,7 +7,6 @@ class messageManager:
     def updateReference(self, msg):
         if "DriverList" in msg:
             self.driverList=msg["DriverList"]
-            # print(json.dumps(self.driverList, indent=4))
             # self.pushDriverList()
         if "SessionInfo" in msg:
             self.sessionInfo=msg["SessionInfo"]
@@ -18,7 +16,6 @@ class messageManager:
             if type(info) is not dict: 
                 continue 
             self.discord.post(
-                # username=f"{info['FullName']} ({info['Tla']}) - {info['RacingNumber']}",
                 username=f"{info['Tla']} - {info['RacingNumber']}",
                 embeds=[
                     {
@@ -81,9 +78,10 @@ class messageManager:
                         username=f"{info['Tla']} - {info['RacingNumber']}",
                         embeds=[
                             {
-                                "title": "Overall Best" if stat["PersonalBestLapTime"]["Position"] == 1 else "Personal Best Lap",
+                                "title": "Overall Quickest" if stat["PersonalBestLapTime"]["Position"] == 1 else "Personal Best Lap",
                                 "fields": [
-                                    {"name": "Lap Time", "value": stat["PersonalBestLapTime"]["Value"]}
+                                    {"name": "Lap Time", "value": stat["PersonalBestLapTime"]["Value"]},
+                                    {"name": "Position", "value": stat["PersonalBestLapTime"]["Position"]}
                                 ],
                                 # purple: 10181046
                                 # green: 5763719
@@ -105,7 +103,8 @@ class messageManager:
                             {
                                 "title": "Fastest Lap",
                                 "fields": [
-                                    {"name": "Lap Time", "value": stat["PersonalBestLapTime"]["Value"]}
+                                    {"name": "Lap Time", "value": stat["PersonalBestLapTime"]["Value"]},
+                                    {"name": "Position", "value": stat["PersonalBestLapTime"]["Position"]}
                                 ],
                                 # purple: 10181046
                                 "color": 10181046
