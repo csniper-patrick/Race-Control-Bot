@@ -109,7 +109,7 @@ class messageManager:
         #                     }
         #                 ],
         #                 avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
-                    )
+        #             )
 
     def liveTimingAppDataHandler(self, msg):
         lineStats = msg["A"][1]["Lines"]
