@@ -89,27 +89,27 @@ class messageManager:
                         ],
                         avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
                     )
-        # elif self.sessionInfo["Type"] in ["Race", "Sprint"]:
-        #     for RacingNumber, stat in timingStats.items():
-        #         if ( "PersonalBestLapTime" in stat and
-        #              "Value" in stat["PersonalBestLapTime"] and
-        #              stat["PersonalBestLapTime"]["Value"] != "" and 
-        #              stat["PersonalBestLapTime"]["Position"] == 1 ):
-        #             info = self.driverList[RacingNumber]
-        #             self.discord.post(
-        #                 username=f"{info['Tla']} - {info['RacingNumber']}",
-        #                 embeds=[
-        #                     {
-        #                         "title": "Fastest Lap",
-        #                         "fields": [
-        #                             {"name": "Lap Time", "value": stat["PersonalBestLapTime"]["Value"], "inline": True },
-        #                         ],
-        #                         # purple: 10181046
-        #                         "color": 10181046
-        #                     }
-        #                 ],
-        #                 avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
-        #             )
+        elif self.sessionInfo["Type"] in ["Race", "Sprint"]:
+            for RacingNumber, stat in timingStats.items():
+                if ( "PersonalBestLapTime" in stat and
+                     "Value" in stat["PersonalBestLapTime"] and
+                     stat["PersonalBestLapTime"]["Value"] != "" and 
+                     stat["PersonalBestLapTime"]["Position"] == 1 ):
+                    info = self.driverList[RacingNumber]
+                    self.discord.post(
+                        username=f"{info['Tla']} - {info['RacingNumber']}",
+                        embeds=[
+                            {
+                                "title": "Fastest Lap",
+                                "fields": [
+                                    {"name": "Lap Time", "value": stat["PersonalBestLapTime"]["Value"], "inline": True },
+                                ],
+                                # purple: 10181046
+                                "color": 10181046
+                            }
+                        ],
+                        avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
+                    )
 
     def liveTimingAppDataHandler(self, msg):
         lineStats = msg["A"][1]["Lines"]
