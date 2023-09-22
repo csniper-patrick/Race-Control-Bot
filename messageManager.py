@@ -112,47 +112,45 @@ class messageManager:
     
     def liveTimingAppDataHandler(self, msg):
         lineStats = msg["A"][1]["Lines"]
-        # Announce when race leader change
-        if self.sessionInfo["Type"] in ["Race", "Sprint"] and lineStats :
-            for RacingNumber, stat in lineStats : 
-                info = self.driverList[RacingNumber]
-                if stat["Line"] == 1 :
-                    self.discord.post(
-                        username=f"{info['Tla']} - {info['RacingNumber']}",
-                        embeds=[
-                            {
-                                "title": "Race Leader",
-                                "fields": [
-                                    {"name": key, "value": info[key], "inline": True}
-                                    for key in ["FullName", "TeamName", "CountryCode"]
-                                ],
-                                "color": int(info['TeamColour'], 16),
-                            }
-                        ],
-                        avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
-                    )
-                if "Stints" in stat:
-                    for stints, stintInfo in stat["Stints"]:
-                        if "New" in stintInfo:
-                            self.discord.post(
-                                username=f"{info['Tla']} - {info['RacingNumber']}",
-                                embeds=[
-                                    {
-                                        "title": "Tyre Change",
-                                        "fields": [
-                                            {"name": key, "value": stintInfo[key], "inline": True}
-                                            for key in ["Compound", "New"]
-                                        ],
-                                        # SOFT(RED): 15548997
-                                        # MEDIUM(YELLOW): 16776960
-                                        # HARD(WHITE): 16777215
-                                        # INTER(GREEN): 2067276
-                                        # WET(BLUE): 2123412
-                                        # TEST_UNKNOWN: 
-                                        # "color": int(info['TeamColour'], 16),
-                                    }
-                                ],
-                                avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
-                            )
-                            
-
+        # Announce Race leader change 
+        # Announce Tyre change always
+        for RacingNumber, stat in lineStats: 
+            info = self.driverList[RacingNumber]
+            if stat["Line"] == 1 and self.sessionInfo["Type"] in ["Race", "Sprint"] and lineStats:
+                self.discord.post(
+                    username=f"{info['Tla']} - {info['RacingNumber']}",
+                    embeds=[
+                        {
+                            "title": "Race Leader",
+                            "fields": [
+                                {"name": key, "value": info[key], "inline": True}
+                                for key in ["FullName", "TeamName", "CountryCode"]
+                            ],
+                            "color": int(info['TeamColour'], 16),
+                        }
+                    ],
+                    avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
+                )
+            if "Stints" in stat:
+                for stint, stintInfo in stat["Stints"]:
+                    if "New" in stintInfo:
+                        self.discord.post(
+                            username=f"{info['Tla']} - {info['RacingNumber']}",
+                            embeds=[
+                                {
+                                    "title": "Tyre Change",
+                                    "fields": [
+                                        {"name": key, "value": stintInfo[key], "inline": True}
+                                        for key in ["Compound", "New"]
+                                    ],
+                                    # SOFT  : 15548997 (RED)
+                                    # MEDIUM: 16776960 (YELLOW)
+                                    # HARD  : 16777215 (WHITE)
+                                    # INTER : 2067276  (GREEN)
+                                    # WET   : 2123412  (BLUE)
+                                    # TEST_UNKNOWN: None
+                                    "color": int(info['TeamColour'], 16),
+                                }
+                            ],
+                            avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
+                        )
