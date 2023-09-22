@@ -67,50 +67,49 @@ class messageManager:
         # Post personal best when not in race / sprint
         # Post overall best in any session.
         timingStats = msg["A"][1]["Lines"]
-        if self.sessionInfo["Type"] in ["Practice", "Qualifying", "Sprint Shootout"]:
-            for RacingNumber, stat in timingStats.items():
-                if ( "PersonalBestLapTime" in stat and
-                     "Value" in stat["PersonalBestLapTime"] and
-                     stat["PersonalBestLapTime"]["Value"] != "" ):
-                    info = self.driverList[RacingNumber]
-                    self.discord.post(
-                        username=f"{info['Tla']} - {info['RacingNumber']}",
-                        embeds=[
-                            {
-                                "title": "Overall Quickest" if stat["PersonalBestLapTime"]["Position"] == 1 else "Personal Best Lap",
-                                "fields": [
-                                    {"name": "Lap Time", "value": stat["PersonalBestLapTime"]["Value"], "inline": True },
-                                    {"name": "Position", "value": stat["PersonalBestLapTime"]["Position"], "inline": True }
-                                ],
-                                # purple: 10181046
-                                # green: 5763719
-                                "color": 10181046 if stat["PersonalBestLapTime"]["Position"] == 1 else 5763719
-                            }
-                        ],
-                        avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
-                    )
-        elif self.sessionInfo["Type"] in ["Race", "Sprint"]:
-            for RacingNumber, stat in timingStats.items():
-                if ( "PersonalBestLapTime" in stat and
-                     "Value" in stat["PersonalBestLapTime"] and
-                     stat["PersonalBestLapTime"]["Value"] != "" and 
-                     stat["PersonalBestLapTime"]["Position"] == 1 ):
-                    info = self.driverList[RacingNumber]
-                    self.discord.post(
-                        username=f"{info['Tla']} - {info['RacingNumber']}",
-                        embeds=[
-                            {
-                                "title": "Fastest Lap",
-                                "fields": [
-                                    {"name": "Lap Time", "value": stat["PersonalBestLapTime"]["Value"], "inline": True },
-                                ],
-                                # purple: 10181046
-                                "color": 10181046
-                            }
-                        ],
-                        avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
-                    )
 
+        for RacingNumber, stat in timingStats.items():
+            info = self.driverList[RacingNumber]
+            if (
+                "PersonalBestLapTime" in stat and
+                "Value" in stat["PersonalBestLapTime"] and
+                stat["PersonalBestLapTime"]["Value"] != "" and 
+                stat["PersonalBestLapTime"]["Position"] == 1
+            ):
+                self.discord.post(
+                    username=f"{info['Tla']} - {info['RacingNumber']}",
+                    embeds=[
+                        {
+                            "title": "Ouickest Overall",
+                            "fields": [
+                                {"name": "Lap Time", "value": stat["PersonalBestLapTime"]["Value"], "inline": True },
+                            ],
+                            "color": 10181046 #Purple
+                        }
+                    ],
+                    avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
+                )
+            elif (
+                "PersonalBestLapTime" in stat and
+                "Value" in stat["PersonalBestLapTime"] and
+                stat["PersonalBestLapTime"]["Value"] != "" and 
+                self.sessionInfo["Type"] in ["Qualifying", "Sprint Shootout"]
+            ):
+                self.discord.post(
+                    username=f"{info['Tla']} - {info['RacingNumber']}",
+                    embeds=[
+                        {
+                            "title": "Personal Best",
+                            "fields": [
+                                {"name": "Lap Time", "value": stat["PersonalBestLapTime"]["Value"], "inline": True },
+                                {"name": "Position", "value": stat["PersonalBestLapTime"]["Position"], "inline": True }
+                            ],
+                            "color": 5763719 #Green
+                        }
+                    ],
+                    avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
+                )
+    
     def liveTimingAppDataHandler(self, msg):
         lineStats = msg["A"][1]["Lines"]
         # Announce when race leader change
@@ -149,6 +148,7 @@ class messageManager:
                                         # HARD(WHITE): 16777215
                                         # INTER(GREEN): 2067276
                                         # WET(BLUE): 2123412
+                                        # TEST_UNKNOWN: 
                                         # "color": int(info['TeamColour'], 16),
                                     }
                                 ],
