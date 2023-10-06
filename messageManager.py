@@ -9,6 +9,8 @@ class messageManager:
             self.driverList=msg["DriverList"]
         if "SessionInfo" in msg:
             self.sessionInfo=msg["SessionInfo"]
+        if "TimingStats" in msg:
+            self.timingStats=msg["TimingStats"]
     
     def pushDriverList(self):
         for number, info in self.driverList.items():
@@ -70,45 +72,48 @@ class messageManager:
 
         for RacingNumber, stat in timingStats.items():
             info = self.driverList[RacingNumber]
-            if (
+            if ( # Check lap time improved
                 "PersonalBestLapTime" in stat and
                 "Value" in stat["PersonalBestLapTime"] and
-                stat["PersonalBestLapTime"]["Value"] != "" and 
-                stat["PersonalBestLapTime"]["Position"] == 1
+                stat["PersonalBestLapTime"]["Value"] != "" and
+                stat["PersonalBestLapTime"]["Value"] < self.timingStats["Lines"][RacingNumber]["PersonalBestLapTime"]["Value"]
             ):
-                self.discord.post(
-                    username=f"{info['Tla']} - {info['RacingNumber']}",
-                    embeds=[
-                        {
-                            "title": "Ouickest Overall",
-                            "fields": [
-                                {"name": "Lap Time", "value": stat["PersonalBestLapTime"]["Value"], "inline": True },
-                            ],
-                            "color": 10181046 #Purple
-                        }
-                    ],
-                    avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
-                )
-            elif (
-                "PersonalBestLapTime" in stat and
-                "Value" in stat["PersonalBestLapTime"] and
-                stat["PersonalBestLapTime"]["Value"] != "" and 
-                self.sessionInfo["Type"] in ["Qualifying", "Sprint Shootout"]
-            ):
-                self.discord.post(
-                    username=f"{info['Tla']} - {info['RacingNumber']}",
-                    embeds=[
-                        {
-                            "title": "Personal Best",
-                            "fields": [
-                                {"name": "Lap Time", "value": stat["PersonalBestLapTime"]["Value"], "inline": True },
-                                {"name": "Position", "value": stat["PersonalBestLapTime"]["Position"], "inline": True }
-                            ],
-                            "color": 5763719 #Green
-                        }
-                    ],
-                    avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
-                )
+                # Quickest Overall
+                if(
+                    "Position" in stat["PersonalBestLapTime"] and stat["PersonalBestLapTime"]["Position"]==1 or
+                    not "Position" in stat["PersonalBestLapTime"] and self.timingStats["Lines"][RacingNumber]["PersonalBestLapTime"]["Position"]
+                ):
+                    self.discord.post(
+                        username=f"{info['Tla']} - {info['RacingNumber']}",
+                        embeds=[
+                            {
+                                "title": "Ouickest Overall",
+                                "fields": [
+                                    {"name": "Lap Time", "value": stat["PersonalBestLapTime"]["Value"], "inline": True },
+                                ],
+                                "color": 10181046 #Purple
+                            }
+                        ],
+                        avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
+                    )
+                elif (self.sessionInfo["Type"] in ["Qualifying", "Sprint Shootout"]):
+                    self.discord.post(
+                        username=f"{info['Tla']} - {info['RacingNumber']}",
+                        embeds=[
+                            {
+                                "title": "Personal Best",
+                                "fields": [
+                                    {"name": "Lap Time", "value": stat["PersonalBestLapTime"]["Value"], "inline": True }
+                                ],
+                                "color": 5763719 #Green
+                            }
+                        ],
+                        avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
+                    )
+        # update object anyway
+        self.timingStats["Lines"] = updateDictDelta(self.timingStats["Lines"], timingStats)
+            
+
     
     def liveTimingAppDataHandler(self, msg):
         lineStats = msg["A"][1]["Lines"]
@@ -154,3 +159,26 @@ class messageManager:
                             ],
                             avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
                         )
+
+
+def updateDictDelta(obj, delta):
+    for key, value in delta.items():
+        if type(value) == dict:
+            obj[key] = updateDictDelta(obj[key], value)
+        elif type(value) == list:
+            obj[key] = updateListDelta(obj[key], value)
+        else:
+            obj[key] = value
+    return obj
+
+def updateListDelta(obj, delta):
+    for key, value in enumerate(delta):
+        if type(value) == dict:
+            obj[key] = updateDictDelta(obj[key], value)
+        elif type(value) == list:
+            obj[key] = updateListDelta(obj[key], value)
+        elif key < len(obj):
+            obj[key] = value
+        else:
+            obj.append(value)
+    return obj
