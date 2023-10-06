@@ -76,7 +76,10 @@ class messageManager:
                 "PersonalBestLapTime" in stat and
                 "Value" in stat["PersonalBestLapTime"] and
                 stat["PersonalBestLapTime"]["Value"] != "" and
-                stat["PersonalBestLapTime"]["Value"] < self.timingStats["Lines"][RacingNumber]["PersonalBestLapTime"]["Value"]
+                (
+                    stat["PersonalBestLapTime"]["Value"] < self.timingStats["Lines"][RacingNumber]["PersonalBestLapTime"]["Value"] or
+                    self.timingStats["Lines"][RacingNumber]["PersonalBestLapTime"]["Value"]==""
+                )
             ):
                 # Quickest Overall
                 if(
