@@ -176,12 +176,12 @@ def updateDictDelta(obj, delta):
 
 def updateListDelta(obj, delta):
     for key, value in enumerate(delta):
-        if type(value) == dict:
+        if key >= len(obj):
+            obj[key] = value
+        elif type(value) == dict:
             obj[key] = updateDictDelta(obj[key], value)
         elif type(value) == list:
             obj[key] = updateListDelta(obj[key], value)
-        elif key < len(obj):
-            obj[key] = value
         else:
             obj.append(value)
     return obj
