@@ -83,8 +83,14 @@ class messageManager:
             ):
                 # Quickest Overall
                 if(
-                    "Position" in stat["PersonalBestLapTime"] and stat["PersonalBestLapTime"]["Position"]==1 or
-                    not "Position" in stat["PersonalBestLapTime"] and self.timingStats["Lines"][RacingNumber]["PersonalBestLapTime"]["Position"]
+                    (
+                        "Position" in stat["PersonalBestLapTime"] and
+                        stat["PersonalBestLapTime"]["Position"]==1
+                    ) or
+                    (
+                        not "Position" in stat["PersonalBestLapTime"] and
+                        self.timingStats["Lines"][RacingNumber]["PersonalBestLapTime"]["Position"] == 1
+                    )
                 ):
                     self.discord.post(
                         username=f"{info['Tla']} - {info['RacingNumber']}",
@@ -99,7 +105,7 @@ class messageManager:
                         ],
                         avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
                     )
-                elif (self.sessionInfo["Type"] in ["Qualifying", "Sprint Shootout"]):
+                elif ( self.sessionInfo["Type"] in ["Qualifying", "Sprint Shootout"] ):
                     self.discord.post(
                         username=f"{info['Tla']} - {info['RacingNumber']}",
                         embeds=[
