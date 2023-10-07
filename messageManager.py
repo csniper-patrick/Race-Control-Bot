@@ -166,10 +166,15 @@ class messageManager:
 
 def updateDictDelta(obj, delta):
     for key, value in delta.items():
-        if type(value) == dict:
+        if type(value) == dict and type(obj[key]) == dict:
             obj[key] = updateDictDelta(obj[key], value)
-        elif type(value) == list:
+        elif type(value) == list and type(obj[key]) == list:
             obj[key] = updateListDelta(obj[key], value)
+        elif type(value) == dict and type(obj[key]) == list:
+            obj[key] = updateListDelta(obj[key], [
+                a_value
+                for a_key, a_value in value.items()
+            ])
         else:
             obj[key] = value
     return obj
@@ -177,11 +182,17 @@ def updateDictDelta(obj, delta):
 def updateListDelta(obj, delta):
     for key, value in enumerate(delta):
         if key >= len(obj):
-            obj[key] = value
-        elif type(value) == dict:
-            obj[key] = updateDictDelta(obj[key], value)
-        elif type(value) == list:
-            obj[key] = updateListDelta(obj[key], value)
-        else:
             obj.append(value)
+        elif type(value) == dict and type(obj[key]) == dict:
+            obj[key] = updateDictDelta(obj[key], value)
+        elif type(value) == list and type(obj[key]) == list:
+            obj[key] = updateListDelta(obj[key], value)
+        elif type(value) == dict and type(obj[key]) == list:
+            obj[key] = updateListDelta(obj[key], [
+                a_value
+                for a_key, a_value in value.items()
+            ])
+        else:
+            obj[key] = value
+            
     return obj
