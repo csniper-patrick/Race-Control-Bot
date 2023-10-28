@@ -26,20 +26,19 @@ def negotiate():
         print("error")
 
 async def connectRaceControl():
-    data, headers = negotiate()
-    params = urllib.parse.urlencode({
-        "clientProtocol": 1.5,
-        "transport": "webSockets",
-        "connectionToken": data["ConnectionToken"],
-        "connectionData": json.dumps([{"name": "Streaming"}])
-    })
-    extra_headers={
-        "User-Agent": "BestHTTP",
-        "Accept-Encoding": "gzip,identity",
-        "Cookie": headers["Set-Cookie"]
-    }
-    msg_cnt=0
     while True:
+        data, headers = negotiate()
+        params = urllib.parse.urlencode({
+            "clientProtocol": 1.5,
+            "transport": "webSockets",
+            "connectionToken": data["ConnectionToken"],
+            "connectionData": json.dumps([{"name": "Streaming"}])
+        })
+        extra_headers={
+            "User-Agent": "BestHTTP",
+            "Accept-Encoding": "gzip,identity",
+            "Cookie": headers["Set-Cookie"]
+        }
         async with websockets.connect(f'{websocketUrl}/connect?{params}', extra_headers=extra_headers) as sock:
             try:
                 await sock.send(

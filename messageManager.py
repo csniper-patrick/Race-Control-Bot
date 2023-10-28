@@ -32,6 +32,16 @@ class messageManager:
             
         return
 
+    def liveDriverListHandler(self, msg):
+        driverList = msg["A"][1]
+        self.driverList=updateDictDelta(self.driverList, driverList)
+        return
+    
+    def liveSessionInfoHandler(self, msg):
+        sessionInfo = msg["A"][1]
+        self.sessionInfo=updateDictDelta(self.sessionInfo, sessionInfo)
+        return
+
     def liveTrackStatusHandler(self, msg):
         self.discord.post(
             username="賽道狀況 (Alpha)",

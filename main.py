@@ -27,58 +27,63 @@ def negotiate():
 
 async def connectRaceControl():
 
-    data, headers = negotiate()
-    params = urllib.parse.urlencode({
-        "clientProtocol": 1.5,
-        "transport": "webSockets",
-        "connectionToken": data["ConnectionToken"],
-        "connectionData": json.dumps([{"name": "Streaming"}])
-    })
-    extra_headers={
-        "User-Agent": "BestHTTP",
-        "Accept-Encoding": "gzip,identity",
-        "Cookie": headers["Set-Cookie"]
-    }
-    async with websockets.connect(f'{websocketUrl}/connect?{params}', extra_headers=extra_headers) as sock:
-        try:
-            await sock.send(
-                json.dumps(
-                    {
-                        "H": "Streaming",
-                        "M": "Subscribe",
-                        # "A": [["Heartbeat", "CarData.z", "Position.z", "ExtrapolatedClock", "TopThree", "RcmSeries","TimingStats", "TimingAppData","WeatherData", "TrackStatus", "DriverList", "RaceControlMessages", "SessionInfo", "SessionData", "LapCount", "TimingData"]],
-                        "A": [["RaceControlMessages", "TrackStatus", "DriverList", "TimingStats", "TimingAppData", "SessionInfo"]],
-                        "I": 1
-                    }
+
+    while True:
+        data, headers = negotiate()
+        params = urllib.parse.urlencode({
+            "clientProtocol": 1.5,
+            "transport": "webSockets",
+            "connectionToken": data["ConnectionToken"],
+            "connectionData": json.dumps([{"name": "Streaming"}])
+        })
+        extra_headers={
+            "User-Agent": "BestHTTP",
+            "Accept-Encoding": "gzip,identity",
+            "Cookie": headers["Set-Cookie"]
+        }
+
+        async with websockets.connect(f'{websocketUrl}/connect?{params}', extra_headers=extra_headers) as sock:
+            try:
+                await sock.send(
+                    json.dumps(
+                        {
+                            "H": "Streaming",
+                            "M": "Subscribe",
+                            # "A": [["Heartbeat", "CarData.z", "Position.z", "ExtrapolatedClock", "TopThree", "RcmSeries","TimingStats", "TimingAppData","WeatherData", "TrackStatus", "DriverList", "RaceControlMessages", "SessionInfo", "SessionData", "LapCount", "TimingData"]],
+                            "A": [["RaceControlMessages", "TrackStatus", "DriverList", "TimingStats", "TimingAppData", "SessionInfo"]],
+                            "I": 1
+                        }
+                    )
                 )
-            )
-            verbose = (os.getenv('VERBOSE') == "True")
+                verbose = (os.getenv('VERBOSE') == "True")
 
-            manager = messageManager(os.getenv("DISCORD_WEBHOOK"))
+                manager = messageManager(os.getenv("DISCORD_WEBHOOK"))
 
-            while messages := await sock.recv() :
-                messages = json.loads(messages)
-                if verbose and bool(messages): 
-                    print(json.dumps(messages,indent=4))
+                while messages := await sock.recv() :
+                    messages = json.loads(messages)
+                    if verbose and bool(messages): 
+                        print(json.dumps(messages,indent=4))
 
-                # process reference data (R type)
-                if "R" in messages:
-                    manager.updateReference(messages["R"])
-                # process live data (M type)
-                if "M" in messages:
-                    for msg in messages["M"] :
-                        if msg["H"] == "Streaming" and msg["A"][0] == "TrackStatus":
-                            manager.liveTrackStatusHandler( msg = msg )
-                        if msg["H"] == "Streaming" and msg["A"][0] == "RaceControlMessages":
-                            manager.liveRaceControlMessagesHandler( msg = msg )
-                        if msg["H"] == "Streaming" and msg["A"][0] == "TimingStats":
-                            manager.liveTimingStatsHandler( msg = msg )
-                        # if msg["H"] == "Streaming" and msg["A"][0] == "TimingAppData":
-                        #     manager.liveTimingAppDataHandler( msg = msg )
-                        
-        except Exception as error:
-            print(error)
-            return
+                    # process reference data (R type)
+                    if "R" in messages:
+                        manager.updateReference(messages["R"])
+                    # process live data (M type)
+                    if "M" in messages:
+                        for msg in messages["M"] :
+                            if msg["H"] == "Streaming" and msg["A"][0] == "TrackStatus":
+                                manager.liveTrackStatusHandler( msg = msg )
+                            if msg["H"] == "Streaming" and msg["A"][0] == "RaceControlMessages":
+                                manager.liveRaceControlMessagesHandler( msg = msg )
+                            if msg["H"] == "Streaming" and msg["A"][0] == "TimingStats":
+                                manager.liveTimingStatsHandler( msg = msg )
+                            if msg["H"] == "Streaming" and msg["A"][0] == "DriverList":
+                                manager.liveDriverListHandler( msg = msg )
+                            if msg["H"] == "Streaming" and msg["A"][0] == "SessionInfo":
+                                manager.liveSessionInfoHandler( msg = msg )
+                            
+            except Exception as error:
+                print(error)
+                continue
 
 def main():
     load_dotenv()
