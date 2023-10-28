@@ -40,6 +40,49 @@ class messageManager:
     def liveSessionInfoHandler(self, msg):
         sessionInfo = msg["A"][1]
         self.sessionInfo=updateDictDelta(self.sessionInfo, sessionInfo)
+        # Clear TimingStats
+        timingStatsTemplate={
+            "Line": 99,
+            "PersonalBestLapTime": {
+                "Lap": 99,
+                "Position": 99,
+                "Value": "9:59.999"
+            },
+            "BestSectors": [
+                {
+                    "Position": 99,
+                    "Value": "59.999"
+                },
+                {
+                    "Position": 99,
+                    "Value": "59.999"
+                },
+                {
+                    "Position": 99,
+                    "Value": "59.999"
+                }
+            ],
+            "BestSpeeds": {
+                "I1": {
+                    "Position": 99,
+                    "Value": "999"
+                },
+                "I2": {
+                    "Position": 99,
+                    "Value": "999"
+                },
+                "FL": {
+                    "Position": 99,
+                    "Value": "999"
+                },
+                "ST": {
+                    "Position": 99,
+                    "Value": "999"
+                }
+            }
+        }
+        for RacingNumber, Stats in self.timingStats["Lines"].items():
+            self.timingStats["Lines"][RacingNumber]=updateDictDelta(self.timingStats["Lines"][RacingNumber], timingStatsTemplate)
         return
 
     def liveTrackStatusHandler(self, msg):
