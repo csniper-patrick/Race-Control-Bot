@@ -7,8 +7,23 @@ import os
 from dotenv import load_dotenv
 from messageManager import *
 
-livetimingUrl = "https://livetiming.formula1.com/signalr"
-websocketUrl = "wss://livetiming.formula1.com/signalr"
+load_dotenv()
+
+use_ssl = (os.getenv("USE_SSL", default="True")) == "True"
+api_host = os.getenv("API_HOST", default="livetiming.formula1.com")
+retry = (os.getenv("RETRY", default="True")) == "True"
+
+# livetimingUrl = f"https://{api_host}/signalr" if use_ssl == "true" else f"http://{api_host}/signalr"
+livetimingUrl = urllib.parse.urljoin(f"https://{api_host}"if use_ssl else f"http://{api_host}", "/signalr")
+
+# websocketUrl  = f"wss://{api_host}/signalr"   if use_ssl == "true" else f"ws://{api_host}/signalr"
+websocketUrl  = urllib.parse.urljoin(f"wss://{api_host}"if use_ssl else f"ws://{api_host}", "/signalr")
+
+# staticUrl     = f"https://{api_host}/static"  if use_ssl == "true" else f"http://{api_host}/static"
+staticUrl     = urllib.parse.urljoin(f"https://{api_host}"if use_ssl else f"http://{api_host}", "/static")
+
+print(livetimingUrl, websocketUrl, staticUrl)
+
 clientProtocol= 1.5
 
 def negotiate():
@@ -21,13 +36,12 @@ def negotiate():
                 "clientProtocol": clientProtocol
             }
         )
+        print(res.json(), res.headers)
         return res.json(), res.headers
     except:
         print("error")
 
 async def connectRaceControl():
-
-
     while True:
         data, headers = negotiate()
         params = urllib.parse.urlencode({
@@ -42,7 +56,7 @@ async def connectRaceControl():
             "Cookie": headers["Set-Cookie"]
         }
 
-        async with websockets.connect(f'{websocketUrl}/connect?{params}', extra_headers=extra_headers) as sock:
+        async with websockets.connect(f'{websocketUrl}/connect?{params}', extra_headers=extra_headers, ping_interval=None) as sock:
             try:
                 await sock.send(
                     json.dumps(
@@ -83,10 +97,12 @@ async def connectRaceControl():
                             
             except Exception as error:
                 print(error)
-                continue
+                if retry:
+                    continue
+                else:
+                    break
 
 def main():
-    load_dotenv()
     asyncio.get_event_loop().run_until_complete(connectRaceControl())
 
 if __name__ == "__main__":
