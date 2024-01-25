@@ -64,7 +64,7 @@ async def connectRaceControl():
                             "H": "Streaming",
                             "M": "Subscribe",
                             # "A": [["Heartbeat", "CarData.z", "Position.z", "ExtrapolatedClock", "TopThree", "RcmSeries","TimingStats", "TimingAppData","WeatherData", "TrackStatus", "DriverList", "RaceControlMessages", "SessionInfo", "SessionData", "LapCount", "TimingData"]],
-                            "A": [["RaceControlMessages", "TrackStatus", "DriverList", "TimingStats", "TimingAppData", "SessionInfo"]],
+                            "A": [["Heartbeat", "RaceControlMessages", "TrackStatus", "DriverList", "WeatherData", "TimingStats", "TimingAppData", "SessionInfo"]],
                             "I": 1
                         }
                     )
