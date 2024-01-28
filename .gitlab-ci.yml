@@ -1,0 +1,63 @@
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
+stages:
+  - test
+
+.test-job: &test-job-config
+  stage: test
+  image: quay.io/podman/stable
+  timeout: 6 hours
+  before_script:
+    - dnf -y install podman podman-compose git
+  script:
+    - podman compose -f test-compose.yaml up --abort-on-container-exit || true
+  allow_failure: true
+
+test-shootout:
+  <<: *test-job-config
+  variables:
+    REGEXP: brazil-gp-0000[56].*json
+  rules:
+    - if: $CI_COMMIT_BRANCH == "test-SQ"
+    - if: $CI_COMMIT_BRANCH == "test-GP"
+      needs:
+        - test-qualifying
+
+test-sprint:
+  <<: *test-job-config
+  variables:
+    REGEXP: brazil-gp-0000[78].*json
+  rules:
+    - if: $CI_COMMIT_BRANCH == "test-S"
+    - if: $CI_COMMIT_BRANCH == "test-GP"
+      needs:
+        - test-shootout
+
+test-practice:
+  <<: *test-job-config
+  variables:
+    REGEXP: brazil-gp-0000[12].*json
+  rules:
+    - if: $CI_COMMIT_BRANCH == "test-FP"
+    - if: $CI_COMMIT_BRANCH == "test-GP"
+
+test-qualifying:
+  <<: *test-job-config
+  variables:
+    REGEXP: brazil-gp-0000[34].*json
+  rules:
+    - if: $CI_COMMIT_BRANCH == "test-FP"
+    - if: $CI_COMMIT_BRANCH == "test-GP"
+      needs:
+        - test-practice
+
+test-race:
+  <<: *test-job-config
+  variables:
+    REGEXP: brazil-gp-000(09|10).*json
+  rules:
+    - if: $CI_COMMIT_BRANCH == "test-R"
+    - if: $CI_COMMIT_BRANCH == "test-GP"
+      needs:
+        - test-sprint
