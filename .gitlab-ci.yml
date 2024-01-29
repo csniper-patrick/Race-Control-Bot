@@ -47,7 +47,7 @@ test-qualifying:
   variables:
     REGEXP: brazil-gp-0000[34].*json
   rules:
-    - if: $CI_COMMIT_BRANCH == "test-FP"
+    - if: $CI_COMMIT_BRANCH == "test-Q"
     - if: $CI_COMMIT_BRANCH == "test-GP"
       needs:
         - test-practice

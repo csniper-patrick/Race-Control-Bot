@@ -2,14 +2,14 @@ services:
   proxy:
     image: docker.io/library/nginx:alpine
     volumes:
-      - ${CI_PROJECT_DIR:-.}/mock-api/nginx-template/:/etc/nginx/templates/:ro
+      - ./mock-api/nginx-template/:/etc/nginx/templates/:ro
     depends_on:
       - signalr
 
   signalr:
     image: docker.io/library/python:3.12
     volumes:
-      - ${CI_PROJECT_DIR:-.}/mock-api/:/opt/
+      - ./mock-api/:/opt/
     environment:
       - REGEXP=${REGEXP}
     command:
@@ -23,13 +23,14 @@ services:
   bot:
     image: docker.io/library/python:3.12
     volumes:
-      - ${CI_PROJECT_DIR:-.}/:/opt
+      - ./:/opt
     environment:
       - VERBOSE=${VERBOSE:-True}
       - DISCORD_WEBHOOK=${DISCORD_WEBHOOK}
       - USE_SSL=${USE_SSL:-False}
       - API_HOST=${API_HOST:-proxy}
       - RETRY=${RETRY:-False}
+      - VER_TAG=${CI_JOB_ID:-local}
     command:
       - /bin/sh
       - -c
