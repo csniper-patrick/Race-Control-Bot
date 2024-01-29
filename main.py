@@ -22,8 +22,6 @@ websocketUrl  = urllib.parse.urljoin(f"wss://{api_host}"if use_ssl else f"ws://{
 # staticUrl     = f"https://{api_host}/static"  if use_ssl == "true" else f"http://{api_host}/static"
 staticUrl     = urllib.parse.urljoin(f"https://{api_host}"if use_ssl else f"http://{api_host}", "/static")
 
-print(livetimingUrl, websocketUrl, staticUrl)
-
 clientProtocol= 1.5
 
 def negotiate():
@@ -71,7 +69,7 @@ async def connectRaceControl():
                 )
                 verbose = (os.getenv('VERBOSE') == "True")
 
-                manager = messageManager(os.getenv("DISCORD_WEBHOOK"))
+                manager = messageManager(os.getenv("DISCORD_WEBHOOK"), tag=os.getenv("VER_TAG"))
 
                 while messages := await sock.recv() :
                     messages = json.loads(messages)
@@ -88,6 +86,8 @@ async def connectRaceControl():
                                 manager.liveTrackStatusHandler( msg = msg )
                             if msg["H"] == "Streaming" and msg["A"][0] == "RaceControlMessages":
                                 manager.liveRaceControlMessagesHandler( msg = msg )
+                            if msg["H"] == "Streaming" and msg["A"][0] == "TimingAppData":
+                                manager.liveTimingAppDataHandler( msg = msg )
                             if msg["H"] == "Streaming" and msg["A"][0] == "TimingStats":
                                 manager.liveTimingStatsHandler( msg = msg )
                             if msg["H"] == "Streaming" and msg["A"][0] == "DriverList":

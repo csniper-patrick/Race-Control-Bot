@@ -1,7 +1,11 @@
 from discordwebhook import Discord
 class messageManager:
-    def __init__(self, webhook):
+    def __init__(self, webhook, tag=None):
         self.discord = Discord(url=webhook)
+        if tag is not None:
+            self.tag=f" [{tag}]"
+        else:
+            self.tag=""
         return
     
     def updateReference(self, msg):
@@ -11,6 +15,8 @@ class messageManager:
             self.sessionInfo=msg["SessionInfo"]
         if "TimingStats" in msg:
             self.timingStats=msg["TimingStats"]
+        if "TimingAppData" in msg:
+            self.timingAppData=msg["TimingAppData"]
     
     def pushDriverList(self):
         for number, info in self.driverList.items():
@@ -86,14 +92,7 @@ class messageManager:
         return
 
     def liveTrackStatusHandler(self, msg):
-        self.discord.post(
-            username="賽道狀況 (Alpha)",
-            embeds=[
-                {
-                    "title": msg["A"][1]['Message']
-                }
-            ]
-        )
+        return
 
     def liveRaceControlMessagesHandler(self, msg):
         RCMessages=msg["A"][1]["Messages"]
@@ -104,7 +103,7 @@ class messageManager:
             ]
         [
             self.discord.post(
-                username="Mikey Masi (Alpha)",
+                username=f"Mikey Masi{self.tag}",
                 embeds=[
                     {
                         "title": content["Message"],
@@ -146,12 +145,17 @@ class messageManager:
                     )
                 ):
                     self.discord.post(
-                        username=f"{info['Tla']} - {info['RacingNumber']}",
+                        username=f"{info['Tla']} - {info['RacingNumber']}{self.tag}",
                         embeds=[
                             {
                                 "title": "Ouickest Overall",
                                 "fields": [
                                     {"name": "Lap Time", "value": stat["PersonalBestLapTime"]["Value"], "inline": True },
+                                    {
+                                        "name": "Tyre",
+                                        "value": f"{self.timingAppData['Lines'][RacingNumber]['Stints'][-1]['Compound']} (age: {self.timingAppData['Lines'][RacingNumber]['Stints'][-1]['TotalLaps']})",
+                                        "inline": True
+                                    },
                                 ],
                                 "color": 10181046 #Purple
                             }
@@ -160,12 +164,17 @@ class messageManager:
                     )
                 elif ( self.sessionInfo["Type"] in ["Qualifying", "Sprint Shootout"] ):
                     self.discord.post(
-                        username=f"{info['Tla']} - {info['RacingNumber']}",
+                        username=f"{info['Tla']} - {info['RacingNumber']}{self.tag}",
                         embeds=[
                             {
                                 "title": "Personal Best",
                                 "fields": [
-                                    {"name": "Lap Time", "value": stat["PersonalBestLapTime"]["Value"], "inline": True }
+                                    {"name": "Lap Time", "value": stat["PersonalBestLapTime"]["Value"], "inline": True },
+                                    {
+                                        "name": "Tyre",
+                                        "value": f"{self.timingAppData['Lines'][RacingNumber]['Stints'][-1]['Compound']} (age: {self.timingAppData['Lines'][RacingNumber]['Stints'][-1]['TotalLaps']})",
+                                        "inline": True
+                                    },
                                 ],
                                 "color": 5763719 #Green
                             }
@@ -178,61 +187,87 @@ class messageManager:
 
     
     def liveTimingAppDataHandler(self, msg):
+        compoundColor={
+            "SOFT": 15548997, # RED
+            "MEDIUM": 16776960, # YELLOW
+            "HARD": 16777215, # WHITE
+            "INTER": 2067276, # GREEN
+            "WET": 2123412, # BLUE
+        }
         lineStats = msg["A"][1]["Lines"]
-        # Announce Race leader change 
-        # Announce Tyre change always
-        for RacingNumber, stat in lineStats: 
+
+        for RacingNumber, stat in lineStats.items():
             info = self.driverList[RacingNumber]
-            if stat["Line"] == 1 and self.sessionInfo["Type"] in ["Race", "Sprint"] and lineStats:
-                self.discord.post(
-                    username=f"{info['Tla']} - {info['RacingNumber']}",
+            # Rank change
+            if "Line" in stat:
+                if stat["Line"] == 1 and self.sessionInfo["Type"] in ["Race", "Sprint"] :
+                    self.discord.post(
+                    username=f"{info['Tla']} - {info['RacingNumber']}{self.tag}",
                     embeds=[
                         {
-                            "title": "Race Leader",
+                            "title": f"Race Leader: {info['FullName']}",
                             "fields": [
-                                {"name": key, "value": info[key], "inline": True}
-                                for key in ["FullName", "TeamName", "CountryCode"]
+                                {"name": "TeamName", "value": info["TeamName"], "inline": True},
                             ],
                             "color": int(info['TeamColour'], 16),
                         }
                     ],
                     avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
                 )
+                # merge data
+                self.timingAppData["Lines"][RacingNumber]["Line"] = stat["Line"]
+            
+            # Stints
             if "Stints" in stat:
-                for stint, stintInfo in stat["Stints"]:
-                    if "New" in stintInfo:
+                if type(stat["Stints"]) == dict:
+                    stintsDict = dict(
+                        [ (str(idx), stint) for idx, stint in enumerate( self.timingAppData["Lines"][RacingNumber]["Stints"] ) ]
+                    )
+                    stintsDict = updateDictDelta(stintsDict, stat["Stints"])
+                    stintsList = [ stint for _, stint in stintsDict.items() ]
+                    currentStint = stintsList[-1]
+                    # announce tyre change if necessary
+                    if (
+                        self.sessionInfo["Type"] in ["Race", "Sprint"] and
+                        (
+                            len(stintsList) > len(self.timingAppData["Lines"][RacingNumber]["Stints"]) or
+                            currentStint["Compound"] != self.timingAppData["Lines"][RacingNumber]["Stints"][len(stintsList)-1]["Compound"]
+                        ) and
+                        currentStint["TyresNotChanged"] == "0"
+                    ):
                         self.discord.post(
-                            username=f"{info['Tla']} - {info['RacingNumber']}",
+                            username=f"{info['Tla']} - {info['RacingNumber']}{self.tag}",
                             embeds=[
                                 {
                                     "title": "Tyre Change",
                                     "fields": [
-                                        {"name": key, "value": stintInfo[key], "inline": True}
-                                        for key in ["Compound", "New"]
+                                        {"name": "Stint", "value": len(stintsList), "inline": True},
+                                        {"name": "Compound", "value": currentStint["Compound"], "inline": True},
+                                        {"name": "Age", "value": currentStint["StartLaps"], "inline": True},
                                     ],
-                                    # SOFT  : 15548997 (RED)
-                                    # MEDIUM: 16776960 (YELLOW)
-                                    # HARD  : 16777215 (WHITE)
-                                    # INTER : 2067276  (GREEN)
-                                    # WET   : 2123412  (BLUE)
-                                    # TEST_UNKNOWN: None
-                                    "color": int(info['TeamColour'], 16),
+                                    "color": compoundColor[currentStint["Compound"]] if "Compound" in currentStint and currentStint["Compound"] in compoundColor else None,
                                 }
                             ],
                             avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
                         )
+                    self.timingAppData["Lines"][RacingNumber]["Stints"] = stintsList
+                elif type(stat["Stints"]) == list:
 
+                    # merge data
+                    self.timingAppData["Lines"][RacingNumber]["Stints"] = stat["Stints"]
 
 def updateDictDelta(obj, delta):
     for key, value in delta.items():
-        if type(value) == dict and type(obj[key]) == dict:
+        if key not in obj:
+            obj[key] = value
+        elif type(value) == dict and type(obj[key]) == dict:
             obj[key] = updateDictDelta(obj[key], value)
         elif type(value) == list and type(obj[key]) == list:
             obj[key] = updateListDelta(obj[key], value)
         elif type(value) == dict and type(obj[key]) == list:
             obj[key] = updateListDelta(obj[key], [
                 a_value
-                for a_key, a_value in value.items()
+                for _, a_value in value.items()
             ])
         else:
             obj[key] = value
@@ -249,7 +284,7 @@ def updateListDelta(obj, delta):
         elif type(value) == dict and type(obj[key]) == list:
             obj[key] = updateListDelta(obj[key], [
                 a_value
-                for a_key, a_value in value.items()
+                for _, a_value in value.items()
             ])
         else:
             obj[key] = value
