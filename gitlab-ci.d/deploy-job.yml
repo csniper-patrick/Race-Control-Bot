@@ -1,0 +1,25 @@
+.deployment-config: &deployment-config
+  image: quay.io/rockylinux/rockylinux:8
+  before_script:
+    - yum install -y epel-release
+    - yum install -y ansible openssh-clients
+    - mkdir -pv ~/.ssh/
+    - cp ${SSH_KEY_PRI} ~/.ssh/id_rsa
+    - chmod 0600 ~/.ssh/id_rsa
+    - cp ${INVENTORY} ./inventory.ini
+    - cp ${CONFIG} ./ansible.cfg
+    - chmod -R g-w,o-w .
+
+deploy-service-branch:
+  <<: *deployment-config
+  script:
+    - ansible-playbook -l ${CI_COMMIT_BRANCH} -e suffix=-${CI_COMMIT_BRANCH} playbook/01-deploy.yml
+  rules:
+    - if: $CI_COMMIT_REF_PROTECTED == 'true' && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+
+deploy-service-default:
+  <<: *deployment-config
+  script:
+    - ansible-playbook -l ${CI_COMMIT_BRANCH} playbook/01-deploy.yml
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

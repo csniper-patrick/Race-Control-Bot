@@ -1,0 +1,68 @@
+---
+- name: deploy live-race-control-messages service
+  hosts: all
+  vars:
+    service_name: "race-control{{ suffix | default('', true) }}"
+    sysconfig_dir: "/etc/sysconfig/{{ service_name }}.d"
+    venv_path: "/opt/{{ service_name }}"
+
+  tasks: 
+    - name: create necessary directories
+      file:
+        path: "{{ item }}"
+        state: directory
+      loop:
+        - "{{ venv_path }}"
+        - "{{ sysconfig_dir }}"
+        
+    - name: ensure python3.11 is installed
+      yum:
+        name: python3.11
+
+    - name: copy files
+      copy:
+        src: "../{{ item }}"
+        dest: "{{ venv_path }}"
+      loop:
+        - requirements.txt
+        - main.py
+        - messageManager.py
+      notify:
+        - restart services
+
+    - name: create python venv
+      pip:
+        requirements: "{{ venv_path }}/requirements.txt"
+        virtualenv_command: "python3.11 -m venv"
+        virtualenv: "{{ venv_path }}"
+      notify:
+        - restart services
+
+    - name: deploy service template
+      template:
+        src: race-control.service.j2
+        dest: "/etc/systemd/system/{{ service_name }}@.service"
+      notify:
+        - restart services
+    
+    - name: list services instances need to start
+      find:
+        paths: "{{ sysconfig_dir }}"
+        file_type: file
+      register: instances
+    
+    - name: ensure services running
+      systemd:
+        name: "{{ service_name }}@{{ item.path | basename }}"
+        state: started
+        enabled: true
+      loop: "{{ instances.files }}"
+  
+  handlers:
+    - name: restart services
+      systemd:
+        name: "{{ service_name }}@{{ item.path | basename }}"
+        state: restarted
+        enabled: true
+        daemon_reload: true
+      loop: "{{ instances.files }}"
