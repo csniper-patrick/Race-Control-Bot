@@ -191,7 +191,7 @@ class messageManager:
             "SOFT": 15548997, # RED
             "MEDIUM": 16776960, # YELLOW
             "HARD": 16777215, # WHITE
-            "INTER": 2067276, # GREEN
+            "INTERMEDIATE": 2067276, # GREEN
             "WET": 2123412, # BLUE
         }
         lineStats = msg["A"][1]["Lines"]

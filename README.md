@@ -41,11 +41,13 @@ python main.py
 Under the playbook directory are playbooks and templates for the automated deployment of this project.
 
 ## Testing
-I did created a mock API to help my development and CI testing by recording the messages in some of the Grand Prix events. I don't know if those recorded messages can be republished or not, but I don't want to risk it so I have no plan to publish the mock API for now. The API is a simple WebSocket server, behind a nginx reverse proxy that routes the token negotiate step to the actual endpoint while intercepting signalr connection and playing the recorded messages through the socket.  
-You can take `test-compose.yaml` as a reference to design your own mock API endpoint
+The testing setup is very premature, hopefully, I can improve the performance and then publish it as well.
 
 ## Acknowledgment
+
 This project would not be possible without referencing [Philipp Schaefer (theOehrly)](https://github.com/theOehrly)'s work [FastF1](https://github.com/theOehrly/Fast-F1). If you want to know more about how to use the live timing endpoint, definitely check out his code. 
+
+Big thanks to Daniel Chan and everyone in his Discord F1 channel for your feedback. Your feedback improved this project a lot. 
 
 ## Disclaimer
 This is an unofficial project and is not associated in any way with the Formula 1 company, teams, drivers, organizers, organizations, management or governing bodies. F1, FORMULA ONE, FORMULA 1, FIA FORMULA ONE WORLD CHAMPIONSHIP, GRAND PRIX and related marks are trademarks of Formula One Licensing B.V.
