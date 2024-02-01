@@ -49,6 +49,8 @@
       find:
         paths: "{{ sysconfig_dir }}"
         file_type: file
+        excludes:
+          - "*.disable"
       register: instances
     
     - name: ensure services running
