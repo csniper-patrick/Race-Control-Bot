@@ -1,20 +1,22 @@
 services:
   proxy:
     image: docker.io/library/nginx:alpine
+    privileged: true
     volumes:
-      - ./mock-api/nginx-template/:/etc/nginx/templates/:ro
+      - ./mock-api/nginx-template/:/etc/nginx/templates/:Z
     depends_on:
       - signalr
 
   signalr:
     image: docker.io/library/python:3.12
+    privileged: true
     volumes:
-      - ./mock-api/:/opt/
+      - ./mock-api/:/opt/:Z
     environment:
       - SEASON=${SEASON:-2023}
       - MEETING=${MEETING}
       - SESSION=${SESSION}
-      - MESSAGE_GAP=${MESSAGE_GAP:-0.01}
+      - MESSAGE_GAP=${MESSAGE_GAP:-5}
     command:
       - /bin/sh
       - -c
@@ -24,24 +26,18 @@ services:
         gunicorn -b 0.0.0.0:8000 --workers 1 --threads 64 --log-level debug --reload signalr:app
   
   bot:
-    image: docker.io/library/python:3.12
+    image: quay.io/rockylinux/rockylinux:8
+    privileged: true
     volumes:
-      - ./:/opt
+      - ./team-radio:/opt:Z
     environment:
-      - VERBOSE=${VERBOSE:-False}
       - DISCORD_WEBHOOK=${DISCORD_WEBHOOK}
       - USE_SSL=${USE_SSL:-False}
       - API_HOST=${API_HOST:-proxy}
       - RETRY=${RETRY:-False}
       - VER_TAG=${CI_JOB_ID:-local}
     command:
-      - /bin/sh
-      - -c
-      - >
-        cd /opt &&
-        python -m pip install -r requirements.txt &&
-        sleep 10 &&
-        python main.py
+      - /opt/run.sh
     depends_on:
       - proxy
     
