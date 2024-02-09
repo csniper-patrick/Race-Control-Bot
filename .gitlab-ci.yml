@@ -1,9 +1,12 @@
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
 
+cache: []
+
 stages:
   - test
   - deploy
+  - release
 
 include:
   - 'gitlab-ci.d/**.yml'

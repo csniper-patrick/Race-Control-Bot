@@ -61,8 +61,19 @@ async def connectRaceControl():
                         {
                             "H": "Streaming",
                             "M": "Subscribe",
-                            # "A": [["Heartbeat", "CarData.z", "Position.z", "ExtrapolatedClock", "TopThree", "RcmSeries","TimingStats", "TimingAppData","WeatherData", "TrackStatus", "DriverList", "RaceControlMessages", "SessionInfo", "SessionData", "LapCount", "TimingData"]],
-                            "A": [["Heartbeat", "RaceControlMessages", "TrackStatus", "DriverList", "WeatherData", "TimingStats", "TimingAppData", "SessionInfo"]],
+                            "A": [[
+                                    "Heartbeat"
+                                    , "RaceControlMessages"
+                                    # , "TrackStatus" # redundant
+                                    , "DriverList"
+                                    , "WeatherData" 
+                                    , "SessionInfo"
+                                    , "TyreStintSeries" # tyre stints
+                                    , "TimingDataF1" # purple, green lap and race leader
+                                    # , "TimingAppData" # redundant
+                                    # , "TimingStats" # redundant
+                                    # , "PitLaneTimeCollection" # Pit Stop Duration 
+                                 ]],
                             "I": 1
                         }
                     )
@@ -82,18 +93,9 @@ async def connectRaceControl():
                     # process live data (M type)
                     if "M" in messages:
                         for msg in messages["M"] :
-                            if msg["H"] == "Streaming" and msg["A"][0] == "TrackStatus":
-                                manager.liveTrackStatusHandler( msg = msg )
-                            if msg["H"] == "Streaming" and msg["A"][0] == "RaceControlMessages":
-                                manager.liveRaceControlMessagesHandler( msg = msg )
-                            if msg["H"] == "Streaming" and msg["A"][0] == "TimingAppData":
-                                manager.liveTimingAppDataHandler( msg = msg )
-                            if msg["H"] == "Streaming" and msg["A"][0] == "TimingStats":
-                                manager.liveTimingStatsHandler( msg = msg )
-                            if msg["H"] == "Streaming" and msg["A"][0] == "DriverList":
-                                manager.liveDriverListHandler( msg = msg )
-                            if msg["H"] == "Streaming" and msg["A"][0] == "SessionInfo":
-                                manager.liveSessionInfoHandler( msg = msg )
+                            if msg["H"] == "Streaming" and msg["A"][0] in manager.streamHandlers:
+                                manager.streamHandlers[msg["A"][0]]( msg = msg )
+                                
                             
             except Exception as error:
                 print(error)

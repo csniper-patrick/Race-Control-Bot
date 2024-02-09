@@ -1,0 +1,7 @@
+requests
+asyncio
+websockets
+discordwebhook
+python-dotenv
+wget
+whisper_at

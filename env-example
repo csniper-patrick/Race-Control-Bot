@@ -4,5 +4,5 @@
 # Discord webhook url 
 DISCORD_WEBHOOK=https://discord.com/api/webhooks/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-# Print all message from start of session ?
-# BURST_MSG=True
+# bot name suffix
+# VER_TAG=
