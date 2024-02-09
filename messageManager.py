@@ -119,7 +119,7 @@ class messageManager:
                     username=f"{info['TeamName']}{self.tag}",
                     embeds=[
                         {
-                            "title": f"Pit Stop - {info["FullName"]}",
+                            "title": f"Pit Stop - {info['FullName']}",
                             "fields": [
                                 {"name": "Duration", "value": pitLaneTime["Duration"], "inline": True},
                                 {"name": "Lap",   "value": pitLaneTime['Lap'], "inline": True}
@@ -175,7 +175,7 @@ class messageManager:
                                     },
                                     {
                                         "name": "Tyre",
-                                        "value": f"{self.tyreStintSeries["Stints"][RacingNumber][-1]['Compound']} (age: {self.tyreStintSeries["Stints"][RacingNumber][-1]['TotalLaps']})",
+                                        "value": f"{self.tyreStintSeries['Stints'][RacingNumber][-1]['Compound']} (age: {self.tyreStintSeries['Stints'][RacingNumber][-1]['TotalLaps']})",
                                         "inline": True
                                     },
                                 ],
@@ -208,7 +208,7 @@ class messageManager:
                                     },
                                     {
                                         "name": "Tyre",
-                                        "value": f"{self.tyreStintSeries["Stints"][RacingNumber][-1]['Compound']} (age: {self.tyreStintSeries["Stints"][RacingNumber][-1]['TotalLaps']})",
+                                        "value": f"{self.tyreStintSeries['Stints'][RacingNumber][-1]['Compound']} (age: {self.tyreStintSeries['Stints'][RacingNumber][-1]['TotalLaps']})",
                                         "inline": True
                                     },
                                 ],
@@ -228,7 +228,7 @@ class messageManager:
                     username=f"{info['Tla']} - {info['RacingNumber']}{self.tag}",
                     embeds=[
                         {
-                            "title": f"Knocked Out - P{self.timingDataF1["Lines"][RacingNumber]['Position']}",
+                            "title": f"Knocked Out - P{self.timingDataF1['Lines'][RacingNumber]['Position']}",
                             "color": int(info['TeamColour'], 16),
                         }
                     ],
@@ -244,7 +244,7 @@ class messageManager:
                     username=f"{info['Tla']} - {info['RacingNumber']}{self.tag}",
                     embeds=[
                         {
-                            "title": f"Retired - Lap {self.timingDataF1["Lines"][RacingNumber]['NumberOfLaps'] + 1}",
+                            "title": f"Retired - Lap {self.timingDataF1['Lines'][RacingNumber]['NumberOfLaps'] + 1}",
                             "color": int(info['TeamColour'], 16),
                         }
                     ],
