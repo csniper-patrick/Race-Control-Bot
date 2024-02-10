@@ -1,7 +1,7 @@
 from discordwebhook import Discord
 import json
 class messageManager:
-    def __init__(self, webhook, tag=None):
+    def __init__(self, webhook, raceDirector="Race Director", tag=None):
         self.discord = Discord(url=webhook)
         if tag is not None:
             self.tag=f" [{tag}]"
@@ -18,6 +18,7 @@ class messageManager:
             "TimingDataF1" : self.liveTimingDataF1Handler,
             "PitLaneTimeCollection": self.livePitLaneTimeCollectionHandler, 
         }
+        self.raceDirector=raceDirector
         return
     
     def updateReference(self, msg):
@@ -96,7 +97,7 @@ class messageManager:
             if "Flag" in content and content["Flag"] == "CHEQUERED":
                 content["Message"] = f"{content['Message']}\U0001F3C1"
             self.discord.post(
-                username=f"Mikey Masi{self.tag}",
+                username=f"{self.raceDirector}{self.tag}",
                 embeds=[
                     {
                         "title": content["Message"],
@@ -244,7 +245,8 @@ class messageManager:
                     username=f"{info['Tla']} - {info['RacingNumber']}{self.tag}",
                     embeds=[
                         {
-                            "title": f"Retired - Lap {self.timingDataF1['Lines'][RacingNumber]['NumberOfLaps'] + 1}",
+                            # "title": f"Retired - Lap {self.timingDataF1['Lines'][RacingNumber]['NumberOfLaps'] + 1}",
+                            "title": f"Retired{ (' - Lap ' + str(self.timingDataF1['Lines'][RacingNumber]['NumberOfLaps'] + 1) )if 'NumberOfLaps' in self.timingDataF1['Lines'][RacingNumber] else "" }",
                             "color": int(info['TeamColour'], 16),
                         }
                     ],

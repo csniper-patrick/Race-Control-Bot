@@ -9,112 +9,112 @@
   allow_failure: true
   resource_group: test
 
-test-preseason-test:
+.test-practice: &test-practice-config
   <<: *test-job-config
+  rules: 
+    - if: $CI_COMMIT_BRANCH == "test-FP"
+    - if: $CI_COMMIT_BRANCH == "test-GP"
+
+.test-qualifying: &test-qualifying-config
+  <<: *test-job-config
+  rules: 
+    - if: $CI_COMMIT_BRANCH == "test-Q"
+    - if: $CI_COMMIT_BRANCH == "test-GP"
+
+.test-shootout: &test-shootout-config
+  <<: *test-job-config
+  rules: 
+    - if: $CI_COMMIT_BRANCH == "test-SQ"
+    - if: $CI_COMMIT_BRANCH == "test-GP"
+
+.test-sprint: &test-sprint-config
+  <<: *test-job-config
+  rules: 
+    - if: $CI_COMMIT_BRANCH == "test-S"
+    - if: $CI_COMMIT_BRANCH == "test-GP"
+
+.test-race: &test-race-config
+  <<: *test-job-config
+  rules: 
+    - if: $CI_COMMIT_BRANCH == "test-R"
+    - if: $CI_COMMIT_BRANCH == "test-GP"
+
+test-preseason-test:
+  <<: *test-practice-config
   variables:
     SEASON: "2023"
     MEETING: "2023-02-25_Pre-Season_Testing"
     SESSION: "2023-02-23_Practice_1"
     MESSAGE_GAP: "0.01"
-  rules: 
-    - if: $CI_COMMIT_BRANCH == "test-FP"
-    - if: $CI_COMMIT_BRANCH == "test-GP"
 
 test-japan-fp1:
-  <<: *test-job-config
+  <<: *test-practice-config
   variables:
     SEASON: "2023"
     MEETING: "2023-09-24_Japanese_Grand_Prix"
     SESSION: "2023-09-22_Practice_1"
-    MESSAGE_GAP: "0.05"
-  rules: 
-    - if: $CI_COMMIT_BRANCH == "test-FP"
-    - if: $CI_COMMIT_BRANCH == "test-GP"
+    MESSAGE_GAP: "0.03"
 
 test-austria-shootout:
-  <<: *test-job-config
+  <<: *test-shootout-config
   variables:
     SEASON: "2023"
     MEETING: "2023-07-02_Austrian_Grand_Prix"
     SESSION: "2023-07-01_Sprint_Shootout"
-    MESSAGE_GAP: "0.05"
-  rules: 
-    - if: $CI_COMMIT_BRANCH == "test-SQ"
-    - if: $CI_COMMIT_BRANCH == "test-GP"
+    MESSAGE_GAP: "0.03"
 
 test-qatar-shootout:
-  <<: *test-job-config
+  <<: *test-shootout-config
   variables:
     SEASON: "2023"
     MEETING: "2023-10-08_Qatar_Grand_Prix"
     SESSION: "2023-10-07_Sprint_Shootout"
-    MESSAGE_GAP: "0.05"
-  rules: 
-    - if: $CI_COMMIT_BRANCH == "test-SQ"
-    - if: $CI_COMMIT_BRANCH == "test-GP"
+    MESSAGE_GAP: "0.03"
 
 test-spa-sprint:
-  <<: *test-job-config
+  <<: *test-sprint-config
   variables:
     SEASON: "2023"
     MEETING: "2023-07-30_Belgian_Grand_Prix"
     SESSION: "2023-07-29_Sprint"
-    MESSAGE_GAP: "0.05"
-  rules: 
-    - if: $CI_COMMIT_BRANCH == "test-S"
-    - if: $CI_COMMIT_BRANCH == "test-GP"
+    MESSAGE_GAP: "0.03"
 
 test-brazil-sprint:
-  <<: *test-job-config
+  <<: *test-sprint-config
   variables:
     SEASON: "2023"
     MEETING: "2023-11-05_São_Paulo_Grand_Prix"
     SESSION: "2023-11-04_Sprint"
-    MESSAGE_GAP: "0.05"
-  rules: 
-    - if: $CI_COMMIT_BRANCH == "test-S"
-    - if: $CI_COMMIT_BRANCH == "test-GP"
+    MESSAGE_GAP: "0.03"
 
 test-singapore-qualifying:
-  <<: *test-job-config
+  <<: *test-qualifying-config
   variables:
     SEASON: "2023"
     MEETING: "2023-09-17_Singapore_Grand_Prix"
     SESSION: "2023-09-16_Qualifying"
-    MESSAGE_GAP: "0.05"
-  rules: 
-    - if: $CI_COMMIT_BRANCH == "test-Q"
-    - if: $CI_COMMIT_BRANCH == "test-GP"
+    MESSAGE_GAP: "0.03"
 
 test-silverstone-qualifying:
-  <<: *test-job-config
+  <<: *test-qualifying-config
   variables:
     SEASON: "2023"
     MEETING: "2023-07-09_British_Grand_Prix"
     SESSION: "2023-07-08_Qualifying"
-    MESSAGE_GAP: "0.05"
-  rules: 
-    - if: $CI_COMMIT_BRANCH == "test-Q"
-    - if: $CI_COMMIT_BRANCH == "test-GP"
+    MESSAGE_GAP: "0.03"
 
 test-monaco-race:
-  <<: *test-job-config
+  <<: *test-race-config
   variables:
     SEASON: "2023"
     MEETING: "2023-05-28_Monaco_Grand_Prix"
     SESSION: "2023-05-28_Race"
-    MESSAGE_GAP: "0.05"
-  rules: 
-    - if: $CI_COMMIT_BRANCH == "test-R"
-    - if: $CI_COMMIT_BRANCH == "test-GP"
+    MESSAGE_GAP: "0.03"
 
 test-las-vegas-race:
-  <<: *test-job-config
+  <<: *test-race-config
   variables:
     SEASON: "2023"
     MEETING: "2023-11-18_Las_Vegas_Grand_Prix"
     SESSION: "2023-11-18_Race"
-    MESSAGE_GAP: "0.05"
-  rules: 
-    - if: $CI_COMMIT_BRANCH == "test-R"
-    - if: $CI_COMMIT_BRANCH == "test-GP"
+    MESSAGE_GAP: "0.03"

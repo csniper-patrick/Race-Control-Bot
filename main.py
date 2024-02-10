@@ -80,7 +80,11 @@ async def connectRaceControl():
                 )
                 verbose = (os.getenv('VERBOSE') == "True")
 
-                manager = messageManager(os.getenv("DISCORD_WEBHOOK"), tag=os.getenv("VER_TAG"))
+                manager = messageManager(
+                    os.getenv("DISCORD_WEBHOOK"),
+                    raceDirector=os.getenv("RACE_DIRECTOR", default="Race Director"),
+                    tag=os.getenv("VER_TAG")
+                )
 
                 while messages := await sock.recv() :
                     messages = json.loads(messages)

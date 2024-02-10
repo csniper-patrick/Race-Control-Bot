@@ -1,4 +1,4 @@
-# Live Race Control Messages
+# Race Control Bot (F1)
 
 This is a Discord bot that connects to livetiming.formula1.com signalr endpoint using WebSocket, then processes and pushes some of the live messages into the Discord channel of your choice. 
 
@@ -47,7 +47,7 @@ The testing setup is very premature, hopefully, I can improve the performance an
 
 This project would not be possible without referencing [Philipp Schaefer (theOehrly)](https://github.com/theOehrly)'s work [FastF1](https://github.com/theOehrly/Fast-F1). If you want to know more about how to use the live timing endpoint, definitely check out his code. 
 
-Big thanks to Daniel Chan and everyone in his Discord F1 channel for your feedback. Your feedback improved this project a lot. 
+Big thanks to Daniel Chan and everyone in his Discord F1 channel for your feedback. Your feedback improved this project a lot, and your support makes this project meaningful.
 
 ## Disclaimer
 This is an unofficial project and is not associated in any way with the Formula 1 company, teams, drivers, organizers, organizations, management or governing bodies. F1, FORMULA ONE, FORMULA 1, FIA FORMULA ONE WORLD CHAMPIONSHIP, GRAND PRIX and related marks are trademarks of Formula One Licensing B.V.
