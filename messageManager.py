@@ -246,7 +246,7 @@ class messageManager:
                     embeds=[
                         {
                             # "title": f"Retired - Lap {self.timingDataF1['Lines'][RacingNumber]['NumberOfLaps'] + 1}",
-                            "title": f"Retired{ (' - Lap ' + str(self.timingDataF1['Lines'][RacingNumber]['NumberOfLaps'] + 1) )if 'NumberOfLaps' in self.timingDataF1['Lines'][RacingNumber] else "" }",
+                            "title": f"Retired{ (' - Lap ' + str(self.timingDataF1['Lines'][RacingNumber]['NumberOfLaps'] + 1) )if 'NumberOfLaps' in self.timingDataF1['Lines'][RacingNumber] else '' }",
                             "color": int(info['TeamColour'], 16),
                         }
                     ],
