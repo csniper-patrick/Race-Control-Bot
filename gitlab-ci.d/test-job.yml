@@ -12,32 +12,27 @@
 .test-practice: &test-practice-config
   <<: *test-job-config
   rules: 
-    - if: $CI_COMMIT_BRANCH == "test-FP"
-    - if: $CI_COMMIT_BRANCH == "test-GP"
+    - if: $CI_COMMIT_BRANCH == "test-FP" || $CI_COMMIT_BRANCH == "test-GP"
 
 .test-qualifying: &test-qualifying-config
   <<: *test-job-config
   rules: 
-    - if: $CI_COMMIT_BRANCH == "test-Q"
-    - if: $CI_COMMIT_BRANCH == "test-GP"
+    - if: $CI_COMMIT_BRANCH == "test-Q" || $CI_COMMIT_BRANCH == "test-GP"
 
 .test-shootout: &test-shootout-config
   <<: *test-job-config
   rules: 
-    - if: $CI_COMMIT_BRANCH == "test-SQ"
-    - if: $CI_COMMIT_BRANCH == "test-GP"
+    - if: $CI_COMMIT_BRANCH == "test-SQ" || $CI_COMMIT_BRANCH == "test-GP"
 
 .test-sprint: &test-sprint-config
   <<: *test-job-config
   rules: 
-    - if: $CI_COMMIT_BRANCH == "test-S"
-    - if: $CI_COMMIT_BRANCH == "test-GP"
+    - if: $CI_COMMIT_BRANCH == "test-S" || $CI_COMMIT_BRANCH == "test-GP"
 
 .test-race: &test-race-config
   <<: *test-job-config
   rules: 
-    - if: $CI_COMMIT_BRANCH == "test-R"
-    - if: $CI_COMMIT_BRANCH == "test-GP"
+    - if: $CI_COMMIT_BRANCH == "test-R" || $CI_COMMIT_BRANCH == "test-GP"
 
 test-preseason-test:
   <<: *test-practice-config
