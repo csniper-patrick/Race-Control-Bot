@@ -1,5 +1,6 @@
 from discordwebhook import Discord
 import json
+import re
 class messageManager:
     def __init__(self, webhook, raceDirector="Race Director", tag=None):
         self.discord = Discord(url=webhook)
@@ -348,3 +349,14 @@ def updateDictDelta(obj, delta):
         else:
             obj[key] = value
     return obj
+
+def timeDeltaStr(benchmarkStr: str, targetStr: str):
+    benchmarkVal=reversed([ int(i) for i in re.split(':|\.', benchmarkStr) ])
+    benchmarkVal=sum([ val * scaler for val, scaler in zip( benchmarkVal, [1, 1000, 60000] ) ])
+    targetVal=reversed([ int(i) for i in re.split(':|\.', targetStr) ])
+    targetVal=sum([ val * scaler for val, scaler in zip( targetVal, [1, 1000,  60000] ) ])
+    deltaVal = abs(targetVal - benchmarkVal)
+    deltaStr = "+" if targetVal >= benchmarkVal else "-"
+    deltaStr += str(deltaVal // 1000)
+    deltaStr += "." + str(deltaVal % 1000).zfill(3)
+    return deltaStr
