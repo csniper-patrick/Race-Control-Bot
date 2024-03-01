@@ -7,8 +7,8 @@ Because of some of the syntax I use, at least python3.8 should be used. a requir
 
 ### Clone project and install packages
 ```bash
-git clone https://gitlab.com/CSniper/live-race-control-messages.git
-cd live-race-control-messages
+git clone https://gitlab.com/CSniper/race-control-bot.git
+cd race-control-bot
 python3.11 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
