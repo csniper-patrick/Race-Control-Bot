@@ -2,6 +2,17 @@
 
 This is a Discord bot that connects to livetiming.formula1.com signalr endpoint using WebSocket, then processes and pushes some of the live messages into the Discord channel of your choice. 
 
+Features:
+| Message type | Available Session type | Description |
+|--------------|------------------------|-------------|
+| Race control message | ALL | Messages from race control. eg. Flags, VSC/SC, penalty & investigation, lap time deleted |
+| Quickest overall lap time | ALL | Notify when driver recorded questest lap time in the session (purple lap) |
+| Personal best lap time | Qualifying, Sprint Shootout | Notify when driver improved his/her personal best lap time in the session (green lap) |
+| Knocked out of Qualifying | Qualifying, Sprint Shootout | Notify when driver is knocked out of qualifying  |
+| Tyre change | Race, Sprint | Notify with compound when driver change tyre |
+| Race leader change | Race, Sprint | Notify when race leader changed |
+| Retiring from race | Race, Sprint | Notify when driver retired from the session |
+
 ## Installation
 Because of some of the syntax I use, at least python3.8 should be used. a requirements.txt is provided so that you can pip install everything you need from that easily. The app is configured using environment variables, you can define them in a `.env` file. 
 
@@ -24,11 +35,14 @@ You can configure the app using the following environment variables.
 | API_HOST | `(String, Optional)` mock api URL (if you have one) for test purpose |
 | RETRY | `([True]/False, Optional)` Reconnect or not when disconnect from the endpoint |
 | VER_TAG | `(String, Optional)` A suffix to the display name of the bot |
+| RACE_DIRECTOR | `(String, Optional)` Display name of the bot for general message (`"Race Director"`)|
+| VERBOSE | `(True/[False], Optional)` Print incoming message from api to `stdout` |
 
 example `.env` file:
 ```
 DISCORD_WEBHOOK=https://discord.com/api/webhooks/1234567890123456789/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-VER_TAG="No Mikey No"
+VER_TAG='alpha'
+RACE_DIRECTOR='Mikey Masi'
 ```
 
 ### Starting the bot
