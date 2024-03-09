@@ -5,9 +5,9 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-EnvironmentFile=-{{ sysconfig_dir }}/%i
+EnvironmentFile=-{{ sysconfig_dir }}/%i.conf
 WorkingDirectory={{ venv_path }}
-ExecStart={{ venv_path }}/bin/python {{ venv_path }}/main.py
+ExecStart={{ venv_path }}/bin/python {{ venv_path }}/race-control.py
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
 LimitNOFILE=65536

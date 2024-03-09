@@ -2,7 +2,7 @@ from discordwebhook import Discord
 import json
 import re
 class messageManager:
-    def __init__(self, webhook, raceDirector="Race Director", tag=None):
+    def __init__(self, webhook, raceDirector="Race Director", tag=None, msgStyle={}):
         self.discord = Discord(url=webhook)
         if tag is not None:
             self.tag=f" [{tag}]"
@@ -20,6 +20,37 @@ class messageManager:
             "PitLaneTimeCollection": self.livePitLaneTimeCollectionHandler, 
         }
         self.raceDirector=raceDirector
+        self.msgStyle={
+            "flagColor": {
+				"GREEN": 5763719,
+				"CLEAR": 5763719,
+				"YELLOW": 16776960,
+				"DOUBLE YELLOW": 16776960, 
+				"CHEQUERED": 16777215,
+				"BLUE": 3447003,
+				"RED": 15548997	,
+				"BLACK AND WHITE": 16777215,
+				"BLACK AND ORANGE": 15105570,
+				"BLACK": 2303786
+        	},
+            "flagSymbol":{ 
+				"CHEQUERED": ":checkered_flag:",
+				"BLACK": ":flag_black:"
+			},
+        	"modeColor": {
+				"SAFETY CAR": 15844367,
+				"VIRTUAL SAFETY CAR": 15844367
+        	},
+            "compoundColor": {
+				"SOFT": 15548997, # RED
+				"MEDIUM": 16776960, # YELLOW
+				"HARD": 16777215, # WHITE
+				"INTERMEDIATE": 2067276, # GREEN
+				"WET": 2123412, # BLUE
+        	},
+            "compoundSymbol": {}
+		}
+        self.msgStyle = updateDictDelta(self.msgStyle, msgStyle)
         return
     
     def updateReference(self, msg):
@@ -70,22 +101,9 @@ class messageManager:
         return
 
     def liveRaceControlMessagesHandler(self, msg):
-        flagColor={
-            "GREEN": 5763719,
-            "CLEAR": 5763719,
-            "YELLOW": 16776960,
-            "DOUBLE YELLOW": 16776960, 
-            "CHEQUERED": 16777215,
-            "BLUE": 3447003,
-            "RED": 15548997	,
-            "BLACK AND WHITE": 16777215,
-            "BLACK AND ORANGE": 15105570,
-            "BLACK": 2303786
-        }
-        modeColor={
-            "SAFETY CAR": 15844367,
-            "VIRTUAL SAFETY CAR": 15844367
-        }
+        flagColor=self.msgStyle["flagColor"]
+        flagSymbol=self.msgStyle["flagSymbol"]
+        modeColor=self.msgStyle["modeColor"]
         RCMessages=msg["A"][1]["Messages"]
         if type(RCMessages) == dict :
             RCMessages=[
@@ -95,8 +113,8 @@ class messageManager:
         for content in RCMessages:
             if "Flag" in content and content["Flag"] == "BLUE":
                 continue;
-            if "Flag" in content and content["Flag"] == "CHEQUERED":
-                content["Message"] = f"{content['Message']}\U0001F3C1"
+            if "Flag" in content and content["Flag"] in flagSymbol:
+                content["Message"] = f"{flagSymbol[content['Flag']]}{content['Message']}"
             self.discord.post(
                 username=f"{self.raceDirector}{self.tag}",
                 embeds=[
@@ -113,18 +131,23 @@ class messageManager:
             )
     
     def livePitLaneTimeCollectionHandler(self, msg):
+        if not self.sessionInfo["Type"] in ["Race", "Sprint"]:
+            return
         pitLaneTimeCollection = msg["A"][1]["PitTimes"]
         for RacingNumber, pitLaneTime in pitLaneTimeCollection.items():
-            if RacingNumber in self.driverList:
+            if not RacingNumber in self.driverList:
+                continue
+            durationSec=reversed([ float(i) for i in re.split(':', pitLaneTime["Duration"]) ])
+            durationSec=sum([ val * scaler for val, scaler in zip( durationSec, [1, 60] ) ])
+            if durationSec >= 30.0:
                 info = self.driverList[RacingNumber]
                 self.discord.post(
                     username=f"{info['TeamName']}{self.tag}",
                     embeds=[
                         {
-                            "title": f"Pit Stop - {info['FullName']}",
+                            "title": f"Slow Pit Stop - {pitLaneTime['Duration']} in pit lane",
                             "fields": [
-                                {"name": "Duration", "value": pitLaneTime["Duration"], "inline": True},
-                                {"name": "Lap",   "value": pitLaneTime['Lap'], "inline": True}
+                                {"name": "Driver", "value": info['FullName'], "inline": True},
                             ],
                             "color": int(info['TeamColour'], 16),
                         }
@@ -136,34 +159,50 @@ class messageManager:
         return
 
     def liveTimingAppDataHandler(self, msg):
-        compoundColor={
-            "SOFT": 15548997, # RED
-            "MEDIUM": 16776960, # YELLOW
-            "HARD": 16777215, # WHITE
-            "INTERMEDIATE": 2067276, # GREEN
-            "WET": 2123412, # BLUE
-        }
+        compoundColor=self.msgStyle["compoundColor"]
         self.timingAppData = updateDictDelta(self.timingAppData, msg["A"][1])
         return
     
     def liveTimingDataF1Handler(self, msg):
+        compoundSymbol=self.msgStyle["compoundSymbol"]
         self.timingDataF1 = updateDictDelta(self.timingDataF1, msg["A"][1])
         for RacingNumber, stat in msg["A"][1]["Lines"].items():
             info = self.driverList[RacingNumber]
-            if(
-                "LastLapTime" in stat and 
-                "Value" in stat["LastLapTime"] and stat["LastLapTime"]["Value"] != ""
-            ):
-                # Lap time
-                if ("OverallFastest" in stat["LastLapTime"] and 
-                    stat["LastLapTime"]["OverallFastest"] == True
-                ) :
+            if (
+                "BestLapTime" in stat
+                and "LastLapTime" in stat
+                and "PersonalFastest" in stat["LastLapTime"]
+                and stat["LastLapTime"]["PersonalFastest"] == True
+			):
+                # Get current tyre compound
+                currentStint=self.tyreStintSeries['Stints'][RacingNumber][-1]
+                if currentStint['Compound'] in compoundSymbol:
+                    currentCompound = f"{compoundSymbol[currentStint['Compound']]}{currentStint['Compound']}"
+                else:
+                    currentCompound = currentStint['Compound']
+                
+				# Get personal best lap time 
+                if type( self.timingDataF1["Lines"][RacingNumber]["BestLapTime"] ) == dict:
+                    # Not qualifying
+                    BestLapTime = self.timingDataF1["Lines"][RacingNumber]["BestLapTime"]["Value"]
+                elif type( self.timingDataF1["Lines"][RacingNumber]["BestLapTime"] ) == list:
+                    # qualifying
+                    BestLapTime = self.timingDataF1["Lines"][RacingNumber]["BestLapTime"][self.timingDataF1["SessionPart"] - 1]["Value"]
+                
+				# skip if time is empty
+                if BestLapTime == "":
+                    continue
+                
+                if (
+                    "OverallFastest" in stat["LastLapTime"]
+					and stat["LastLapTime"]["OverallFastest"] == True
+				):
                     # Quickest Overall
                     self.discord.post(
                         username=f"{info['Tla']} - {info['RacingNumber']}{self.tag}",
                         embeds=[
                             {
-                                "title": f"Ouickest Overall - {stat['LastLapTime']['Value']}",
+                                "title": f"Quickest Overall - {BestLapTime}",
                                 "fields": [
                                     {
                                         "name": "Sectors",
@@ -177,7 +216,7 @@ class messageManager:
                                     },
                                     {
                                         "name": "Tyre",
-                                        "value": f"{self.tyreStintSeries['Stints'][RacingNumber][-1]['Compound']} (age: {self.tyreStintSeries['Stints'][RacingNumber][-1]['TotalLaps']})",
+                                        "value": f"{currentCompound} (age: {currentStint['TotalLaps']})",
                                         "inline": True
                                     },
                                 ],
@@ -187,16 +226,14 @@ class messageManager:
                         avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
                     )
                 elif (
-                    self.sessionInfo["Type"] in ["Qualifying", "Sprint Shootout"] and
-                    "PersonalFastest" in stat["LastLapTime"] and 
-                    stat["LastLapTime"]["PersonalFastest"] == True
-                ):
+                    self.sessionInfo["Type"] in ["Qualifying", "Sprint Shootout"]
+				):
                     # Personal Best
                     self.discord.post(
                         username=f"{info['Tla']} - {info['RacingNumber']}{self.tag}",
                         embeds=[
                             {
-                                "title": f"Personal Best - {stat['LastLapTime']['Value']}",
+                                "title": f"Personal Best - {BestLapTime}",
                                 "fields": [
                                     {
                                         "name": "Sectors",
@@ -210,7 +247,7 @@ class messageManager:
                                     },
                                     {
                                         "name": "Tyre",
-                                        "value": f"{self.tyreStintSeries['Stints'][RacingNumber][-1]['Compound']} (age: {self.tyreStintSeries['Stints'][RacingNumber][-1]['TotalLaps']})",
+                                        "value": f"{currentCompound} (age: {currentStint['TotalLaps']})",
                                         "inline": True
                                     },
                                 ],
@@ -219,7 +256,7 @@ class messageManager:
                         ],
                         avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
                     )
-                
+            
             # Knocked Out of Qualifying
             if (
                 self.sessionInfo["Type"] in ["Qualifying", "Sprint Shootout"] and
@@ -277,15 +314,12 @@ class messageManager:
         return
     
     def liveTyreStintSeriesHandler(self, msg):
-        compoundColor={
-            "SOFT": 15548997, # RED
-            "MEDIUM": 16776960, # YELLOW
-            "HARD": 16777215, # WHITE
-            "INTERMEDIATE": 2067276, # GREEN
-            "WET": 2123412, # BLUE
-        }
+        compoundColor=self.msgStyle["compoundColor"]
+        compoundSymbol=self.msgStyle["compoundSymbol"]
         lineStats = msg["A"][1]["Stints"]
         for RacingNumber, driverStints in lineStats.items():
+            if RacingNumber not in self.driverList:
+                continue
             info = self.driverList[RacingNumber]
             if type(driverStints) == dict:
                 stintsDict = dict(
@@ -294,20 +328,20 @@ class messageManager:
                 stintsDict = updateDictDelta(stintsDict, driverStints)
                 stintsList = [ stint for _, stint in stintsDict.items() ]
                 currentStint = stintsList[-1]
+                if currentStint['Compound'] in compoundSymbol:
+                    currentCompound = f"{compoundSymbol[currentStint['Compound']]}{currentStint['Compound']}"
+                else:
+                    currentCompound = currentStint['Compound']
                 # announce tyre change if necessary
                 if (
-                    self.sessionInfo["Type"] in ["Race", "Sprint"] and
-                    (
-                        len(stintsList) > len(self.tyreStintSeries["Stints"][RacingNumber]) or
-                        currentStint["Compound"] != self.tyreStintSeries["Stints"][RacingNumber][len(stintsList)-1]["Compound"]
-                    ) and
-                    currentStint["TyresNotChanged"] == "0"
+                    self.sessionInfo["Type"] in ["Race", "Sprint"]
+                    and len(stintsList) > len(self.tyreStintSeries["Stints"][RacingNumber])
                 ):
                     self.discord.post(
                         username=f"{info['Tla']} - {info['RacingNumber']}{self.tag}",
                         embeds=[
                             {
-                                "title": f"Tyre Change - {currentStint['Compound']}",
+                                "title": f"Tyre Change - { currentCompound }",
                                 "fields": [
                                     {"name": "Stint", "value": len(stintsList), "inline": True},
                                     {"name": "Age", "value": currentStint["StartLaps"], "inline": True},
@@ -317,11 +351,7 @@ class messageManager:
                         ],
                         avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
                     )
-                self.tyreStintSeries["Stints"][RacingNumber] = stintsList
-            elif type(driverStints) == list:
-                # direct merge
-                self.tyreStintSeries["Stints"][RacingNumber] = driverStints
-        
+        self.tyreStintSeries = updateDictDelta(self.tyreStintSeries, msg["A"][1])
         return
 
 def updateDictDelta(obj, delta):
@@ -330,11 +360,11 @@ def updateDictDelta(obj, delta):
             obj[key] = value
         elif type(value) == dict and type(obj[key]) == dict:
             obj[key] = updateDictDelta(obj[key], value)
-        elif type(value) == list and type(obj[key]) == list:
-            # obj[key] = updateListDelta(obj[key], value)
-            obj[key] = value
-        elif type(value) == dict and type(obj[key]) == list:
-            tempDict=dict(
+        elif (
+            type(value) == dict and type(obj[key]) == list
+            and all([ k.isnumeric() for k in value.keys()])
+        ):
+            tempDict = dict(
                 [
                     (str(idx), value)
                     for idx, value in enumerate(obj[key])
@@ -345,16 +375,15 @@ def updateDictDelta(obj, delta):
                 value
                 for _, value in tempDict.items()
             ]
-
         else:
             obj[key] = value
     return obj
 
 def timeDeltaStr(benchmarkStr: str, targetStr: str):
-    benchmarkVal=reversed([ int(i) for i in re.split(':|\.', benchmarkStr) ])
-    benchmarkVal=sum([ val * scaler for val, scaler in zip( benchmarkVal, [1, 1000, 60000] ) ])
-    targetVal=reversed([ int(i) for i in re.split(':|\.', targetStr) ])
-    targetVal=sum([ val * scaler for val, scaler in zip( targetVal, [1, 1000,  60000] ) ])
+    benchmarkVal=reversed([ float(i) for i in re.split(':', benchmarkStr) ])
+    benchmarkVal=sum([ val * scaler for val, scaler in zip( benchmarkVal, [1, 60] ) ]) * 1000
+    targetVal=reversed([ float(i) for i in re.split(':', targetStr) ])
+    targetVal=sum([ val * scaler for val, scaler in zip( targetVal, [1,  60] ) ]) * 1000
     deltaVal = abs(targetVal - benchmarkVal)
     deltaStr = "+" if targetVal >= benchmarkVal else "-"
     deltaStr += str(deltaVal // 1000)
