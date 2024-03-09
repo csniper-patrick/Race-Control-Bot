@@ -15,7 +15,7 @@ deploy-branch:
   <<: *deployment-config
   script:
     - BRANCH_GRP=$(echo ${CI_COMMIT_BRANCH} | cut -d'-' -f1)
-    - ansible-playbook -l ${BRANCH_GRP} -e suffix=-${BRANCH_GRP} playbook/01-deploy.yml
+    - ansible-playbook -l ${BRANCH_GRP} -e suffix=-${BRANCH_GRP} playbook/01-deploy.yaml
   rules:
     - if: $CI_COMMIT_REF_PROTECTED == 'true'
 

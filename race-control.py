@@ -12,6 +12,7 @@ load_dotenv()
 use_ssl = (os.getenv("USE_SSL", default="True")) == "True"
 api_host = os.getenv("API_HOST", default="livetiming.formula1.com")
 retry = (os.getenv("RETRY", default="True")) == "True"
+msgStylePath = os.getenv("MSG_STYLE", default="")
 
 # livetimingUrl = f"https://{api_host}/signalr" if use_ssl == "true" else f"http://{api_host}/signalr"
 livetimingUrl = urllib.parse.urljoin(f"https://{api_host}"if use_ssl else f"http://{api_host}", "/signalr")
@@ -72,18 +73,24 @@ async def connectRaceControl():
                                     , "TimingDataF1" # purple, green lap and race leader
                                     # , "TimingAppData" # redundant
                                     # , "TimingStats" # redundant
-                                    # , "PitLaneTimeCollection" # Pit Stop Duration 
+                                    , "PitLaneTimeCollection" # Pit Stop Duration 
                                  ]],
                             "I": 1
                         }
                     )
                 )
                 verbose = (os.getenv('VERBOSE') == "True")
-
+                
+                if os.path.isfile(msgStylePath):
+                    with open(msgStylePath) as f:
+                        msgStyle = json.load(f)
+                else:
+                    msgStyle = {}
                 manager = messageManager(
                     os.getenv("DISCORD_WEBHOOK"),
                     raceDirector=os.getenv("RACE_DIRECTOR", default="Race Director"),
-                    tag=os.getenv("VER_TAG")
+                    tag=os.getenv("VER_TAG"),
+                    msgStyle=msgStyle
                 )
 
                 while messages := await sock.recv() :

@@ -1,9 +1,7 @@
 .test-job: &test-job-config
   stage: test
-  image: quay.io/podman/stable
+  image: $CI_REGISTRY_IMAGE/podman-compose:latest
   timeout: 1 hours
-  before_script:
-    - dnf -y install podman podman-compose git
   script:
     - podman compose -f test-compose.yaml up --abort-on-container-exit || true
   allow_failure: true
@@ -34,82 +32,67 @@
   rules: 
     - if: $CI_COMMIT_BRANCH == "test-R" || $CI_COMMIT_BRANCH == "test-GP"
 
-test-preseason-test:
-  <<: *test-practice-config
-  variables:
-    SEASON: "2023"
-    MEETING: "2023-02-25_Pre-Season_Testing"
-    SESSION: "2023-02-23_Practice_1"
-    MESSAGE_GAP: "0.01"
+# test-preseason-test:
+#   <<: *test-practice-config
+#   variables:
+#     SESSION_PATH: "2023/2023-02-25_Pre-Season_Testing/2023-02-23_Practice_1/"
+#     MESSAGE_GAP: "0.01"
 
 test-japan-fp1:
   <<: *test-practice-config
   variables:
-    SEASON: "2023"
-    MEETING: "2023-09-24_Japanese_Grand_Prix"
-    SESSION: "2023-09-22_Practice_1"
-    MESSAGE_GAP: "0.03"
+    SESSION_PATH: "2023/2023-09-24_Japanese_Grand_Prix/2023-09-22_Practice_1/"
+    MESSAGE_GAP: "0.04"
+
+test-saudi-fp2:
+  <<: *test-practice-config
+  variables:
+    SESSION_PATH: "2024/2024-03-09_Saudi_Arabian_Grand_Prix/2024-03-07_Practice_2/"
 
 test-austria-shootout:
   <<: *test-shootout-config
   variables:
-    SEASON: "2023"
-    MEETING: "2023-07-02_Austrian_Grand_Prix"
-    SESSION: "2023-07-01_Sprint_Shootout"
-    MESSAGE_GAP: "0.03"
+    SESSION_PATH: "2023/2023-07-02_Austrian_Grand_Prix/2023-07-01_Sprint_Shootout/"
+    MESSAGE_GAP: "0.04"
 
 test-qatar-shootout:
   <<: *test-shootout-config
   variables:
-    SEASON: "2023"
-    MEETING: "2023-10-08_Qatar_Grand_Prix"
-    SESSION: "2023-10-07_Sprint_Shootout"
-    MESSAGE_GAP: "0.03"
+    SESSION_PATH: "2023/2023-10-08_Qatar_Grand_Prix/2023-10-07_Sprint_Shootout/"
+    MESSAGE_GAP: "0.04"
 
 test-spa-sprint:
   <<: *test-sprint-config
   variables:
-    SEASON: "2023"
-    MEETING: "2023-07-30_Belgian_Grand_Prix"
-    SESSION: "2023-07-29_Sprint"
-    MESSAGE_GAP: "0.03"
+    SESSION_PATH: "2023/2023-07-30_Belgian_Grand_Prix/2023-07-29_Sprint/"
+    MESSAGE_GAP: "0.04"
 
 test-brazil-sprint:
   <<: *test-sprint-config
   variables:
-    SEASON: "2023"
-    MEETING: "2023-11-05_São_Paulo_Grand_Prix"
-    SESSION: "2023-11-04_Sprint"
-    MESSAGE_GAP: "0.03"
+    SESSION_PATH: "2023/2023-11-05_São_Paulo_Grand_Prix/2023-11-04_Sprint/"
+    MESSAGE_GAP: "0.04"
 
 test-singapore-qualifying:
   <<: *test-qualifying-config
   variables:
-    SEASON: "2023"
-    MEETING: "2023-09-17_Singapore_Grand_Prix"
-    SESSION: "2023-09-16_Qualifying"
-    MESSAGE_GAP: "0.03"
+    SESSION_PATH: "2023/2023-09-17_Singapore_Grand_Prix/2023-09-16_Qualifying/"
+    MESSAGE_GAP: "0.04"
 
 test-silverstone-qualifying:
   <<: *test-qualifying-config
   variables:
-    SEASON: "2023"
-    MEETING: "2023-07-09_British_Grand_Prix"
-    SESSION: "2023-07-08_Qualifying"
-    MESSAGE_GAP: "0.03"
+    SESSION_PATH: "2023/2023-07-09_British_Grand_Prix/2023-07-08_Qualifying/"
+    MESSAGE_GAP: "0.04"
 
 test-monaco-race:
   <<: *test-race-config
   variables:
-    SEASON: "2023"
-    MEETING: "2023-05-28_Monaco_Grand_Prix"
-    SESSION: "2023-05-28_Race"
-    MESSAGE_GAP: "0.03"
+    SESSION_PATH: "2023/2023-05-28_Monaco_Grand_Prix/2023-05-28_Race/"
+    MESSAGE_GAP: "0.04"
 
 test-las-vegas-race:
   <<: *test-race-config
   variables:
-    SEASON: "2023"
-    MEETING: "2023-11-18_Las_Vegas_Grand_Prix"
-    SESSION: "2023-11-18_Race"
-    MESSAGE_GAP: "0.03"
+    SESSION_PATH: "2023/2023-11-18_Las_Vegas_Grand_Prix/2023-11-18_Race/"
+    MESSAGE_GAP: "0.04"

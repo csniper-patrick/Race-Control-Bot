@@ -1,0 +1,6 @@
+build-race-control-image:
+  stage: build
+  image: quay.io/podman/stable
+  script:
+    - podman login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - ( podman pull "$CI_REGISTRY_IMAGE/race-control:$CI_COMMIT_SHORT_SHA" &> /dev/hull ) || ( podman build -f build/race-control.containerfile -t "$CI_REGISTRY_IMAGE/race-control:$CI_COMMIT_SHORT_SHA" . && podman push "$CI_REGISTRY_IMAGE/race-control:$CI_COMMIT_SHORT_SHA" )

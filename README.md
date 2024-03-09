@@ -37,6 +37,7 @@ You can configure the app using the following environment variables.
 | VER_TAG | `(String, Optional)` A suffix to the display name of the bot |
 | RACE_DIRECTOR | `(String, Optional)` Display name of the bot for general message (`"Race Director"`)|
 | VERBOSE | `(True/[False], Optional)` Print incoming message from api to `stdout` |
+| MSG_STYLE | `(File Path, Optional)` Points to a json file that defines tyre compound emoji and flag emoji |
 
 example `.env` file:
 ```
@@ -48,7 +49,7 @@ RACE_DIRECTOR='Mikey Masi'
 ### Starting the bot
 Now you can start the bot. Make sure you have activated the environment
 ```
-python main.py
+python race-control.py
 ```
 
 ### automated deployment

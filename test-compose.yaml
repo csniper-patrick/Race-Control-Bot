@@ -11,9 +11,7 @@ services:
     volumes:
       - ./mock-api/:/opt/
     environment:
-      - SEASON=${SEASON:-2023}
-      - MEETING=${MEETING}
-      - SESSION=${SESSION}
+      - SESSION_PATH=${SESSION_PATH}
       - MESSAGE_GAP=${MESSAGE_GAP:-0.01}
     command:
       - /bin/sh
@@ -24,7 +22,10 @@ services:
         gunicorn -b 0.0.0.0:8000 --workers 1 --threads 64 --log-level debug --reload signalr:app
   
   bot:
-    image: docker.io/library/python:3.12
+    image: ${CI_REGISTRY_IMAGE:-localhost}/race-control:${CI_COMMIT_SHORT_SHA:-local}
+    build:
+      context: .
+      dockerfile: build/race-control.containerfile
     volumes:
       - ./:/opt
     environment:
@@ -35,14 +36,13 @@ services:
       - RETRY=${RETRY:-False}
       - VER_TAG=${CI_JOB_ID:-local}
       - RACE_DIRECTOR=${RACE_DIRECTOR:-Race Director}
+      - MSG_STYLE=${MSG_STYLE}
     command:
       - /bin/sh
       - -c
       - >
-        cd /opt &&
-        python -m pip install -r requirements.txt &&
         sleep 10 &&
-        python main.py
+        python race-control.py
     depends_on:
       - proxy
     
