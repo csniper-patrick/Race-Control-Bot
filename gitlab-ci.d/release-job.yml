@@ -10,14 +10,32 @@ create-release:
     tag_name: '$CI_COMMIT_TAG'
     description: '$CI_COMMIT_TAG_MESSAGE'
 
-release-job:
+.container-image-release: &container-image-release
   stage: release
   image: quay.io/podman/stable
   script:
-    - podman login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - podman login -u "$REGISTRY_USER" -p "$REGISTRY_PASSWORD" $REGISTRY
     - podman pull "$CI_REGISTRY_IMAGE/race-control:$CI_COMMIT_SHORT_SHA"
-    - podman tag "$CI_REGISTRY_IMAGE/race-control:$CI_COMMIT_SHORT_SHA" "$CI_REGISTRY_IMAGE/race-control:$CI_COMMIT_TAG" "$CI_REGISTRY_IMAGE/race-control:latest"
-    - podman push "$CI_REGISTRY_IMAGE/race-control:$CI_COMMIT_TAG"
-    - podman push "$CI_REGISTRY_IMAGE/race-control:latest"
+    - podman tag "$CI_REGISTRY_IMAGE/race-control:$CI_COMMIT_SHORT_SHA" "$IMAGE_FULLNAME:$CI_COMMIT_TAG" "$IMAGE_FULLNAME:latest"
+    - podman push "$IMAGE_FULLNAME:$CI_COMMIT_TAG"
+    - podman push "$IMAGE_FULLNAME:latest"
+
+gitlab-image-release:
+  <<: *container-image-release
+  variables:
+    REGISTRY_USER: "$CI_REGISTRY_USER"
+    REGISTRY_PASSWORD: "$CI_REGISTRY_PASSWORD"
+    REGISTRY: "$CI_REGISTRY"
+    IMAGE_FULLNAME: "$CI_REGISTRY_IMAGE/race-control"
   rules:
-    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_TAG 
+
+docker-image-release:
+  <<: *container-image-release
+  variables:
+    REGISTRY_USER: "$DOCKER_USERNAME"
+    REGISTRY_PASSWORD: "$DOCKER_TOKEN"
+    REGISTRY: "docker.io"
+    IMAGE_FULLNAME: "$DOCKER_REPO"
+  rules:
+    - if: $CI_COMMIT_TAG && $DOCKER_USERNAME && $DOCKER_TOKEN && $DOCKER_REPO

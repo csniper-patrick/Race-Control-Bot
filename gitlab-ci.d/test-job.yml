@@ -32,12 +32,6 @@
   rules: 
     - if: $CI_COMMIT_BRANCH == "test-R" || $CI_COMMIT_BRANCH == "test-GP"
 
-# test-preseason-test:
-#   <<: *test-practice-config
-#   variables:
-#     SESSION_PATH: "2023/2023-02-25_Pre-Season_Testing/2023-02-23_Practice_1/"
-#     MESSAGE_GAP: "0.01"
-
 test-japan-fp1:
   <<: *test-practice-config
   variables:

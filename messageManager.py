@@ -1,6 +1,7 @@
 from discordwebhook import Discord
 import json
 import re
+import copy
 class messageManager:
     def __init__(self, webhook, raceDirector="Race Director", tag=None, msgStyle={}):
         self.discord = Discord(url=webhook)
@@ -316,42 +317,52 @@ class messageManager:
     def liveTyreStintSeriesHandler(self, msg):
         compoundColor=self.msgStyle["compoundColor"]
         compoundSymbol=self.msgStyle["compoundSymbol"]
-        lineStats = msg["A"][1]["Stints"]
-        for RacingNumber, driverStints in lineStats.items():
-            if RacingNumber not in self.driverList:
+        prevFrame = copy.deepcopy(self.tyreStintSeries)
+        self.tyreStintSeries = updateDictDelta(self.tyreStintSeries, msg["A"][1])
+        if self.sessionInfo["Type"] not in ["Race", "Sprint"]:
+            return
+        for RacingNumber, driverStints in self.tyreStintSeries["Stints"].items():
+            if ( RacingNumber not in self.driverList or len(driverStints) == 0 ):
                 continue
             info = self.driverList[RacingNumber]
-            if type(driverStints) == dict:
-                stintsDict = dict(
-                        [ (str(idx), stint) for idx, stint in enumerate( self.tyreStintSeries["Stints"][RacingNumber] ) ]
-                    )
-                stintsDict = updateDictDelta(stintsDict, driverStints)
-                stintsList = [ stint for _, stint in stintsDict.items() ]
-                currentStint = stintsList[-1]
-                if currentStint['Compound'] in compoundSymbol:
-                    currentCompound = f"{compoundSymbol[currentStint['Compound']]}{currentStint['Compound']}"
-                else:
-                    currentCompound = currentStint['Compound']
-                # announce tyre change if necessary
-                if (
-                    self.sessionInfo["Type"] in ["Race", "Sprint"]
-                    and len(stintsList) > len(self.tyreStintSeries["Stints"][RacingNumber])
-                ):
-                    self.discord.post(
-                        username=f"{info['Tla']} - {info['RacingNumber']}{self.tag}",
-                        embeds=[
-                            {
-                                "title": f"Tyre Change - { currentCompound }",
-                                "fields": [
-                                    {"name": "Stint", "value": len(stintsList), "inline": True},
-                                    {"name": "Age", "value": currentStint["StartLaps"], "inline": True},
-                                ],
-                                "color": compoundColor[currentStint["Compound"]] if "Compound" in currentStint and currentStint["Compound"] in compoundColor else None,
-                            }
-                        ],
-                        avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
-                    )
-        self.tyreStintSeries = updateDictDelta(self.tyreStintSeries, msg["A"][1])
+            currentStint = driverStints[-1]
+            if currentStint['Compound'] in compoundSymbol:
+                currentCompound = f"{compoundSymbol[currentStint['Compound']]}{currentStint['Compound']}"
+            else:
+                currentCompound = currentStint['Compound']
+            # announce tyre change if necessary
+            if ( len(driverStints) > len(prevFrame['Stints'][RacingNumber]) ):
+                # case 1 new stints
+                self.discord.post(
+					username=f"{info['Tla']} - {info['RacingNumber']}{self.tag}",
+					embeds=[
+						{
+							"title": f"Tyre Change - { currentCompound }",
+							"fields": [
+								{"name": "Stint", "value": len(driverStints), "inline": True},
+								{"name": "Age", "value": currentStint["StartLaps"], "inline": True},
+							],
+							"color": compoundColor[currentStint["Compound"]] if "Compound" in currentStint and currentStint["Compound"] in compoundColor else None,
+						}
+					],
+					avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
+				)
+            elif( len(driverStints) == len(prevFrame['Stints'][RacingNumber]) and currentStint['Compound'] != prevFrame['Stints'][RacingNumber][-1]['Compound'] ):
+            	# case 2 compound update
+                self.discord.post(
+					username=f"{info['Tla']} - {info['RacingNumber']}{self.tag}",
+					embeds=[
+						{
+							"title": f"Compound - { currentCompound } (Updated)",
+							"fields": [
+								{"name": "Stint", "value": len(driverStints), "inline": True},
+								{"name": "Age", "value": currentStint["StartLaps"], "inline": True},
+							],
+							"color": compoundColor[currentStint["Compound"]] if "Compound" in currentStint and currentStint["Compound"] in compoundColor else None,
+						}
+					],
+					avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None
+				)
         return
 
 def updateDictDelta(obj, delta):
@@ -379,13 +390,18 @@ def updateDictDelta(obj, delta):
             obj[key] = value
     return obj
 
-def timeDeltaStr(benchmarkStr: str, targetStr: str):
-    benchmarkVal=reversed([ float(i) for i in re.split(':', benchmarkStr) ])
-    benchmarkVal=sum([ val * scaler for val, scaler in zip( benchmarkVal, [1, 60] ) ]) * 1000
-    targetVal=reversed([ float(i) for i in re.split(':', targetStr) ])
-    targetVal=sum([ val * scaler for val, scaler in zip( targetVal, [1,  60] ) ]) * 1000
-    deltaVal = abs(targetVal - benchmarkVal)
-    deltaStr = "+" if targetVal >= benchmarkVal else "-"
-    deltaStr += str(deltaVal // 1000)
-    deltaStr += "." + str(deltaVal % 1000).zfill(3)
-    return deltaStr
+def timeStr2msec(timeStr: str):
+    return sum([ val * scaler for val, scaler in zip( reversed([ float(i) for i in re.split(':', timeStr) ]), [1, 60] ) ]) * 1000
+
+def msec2timeStr(msec: int, signed: bool = False):
+    val = int(abs(msec))
+    if signed:
+        timeStr = "+" if msec >= 0 else "-"
+    else:
+        timeStr = "" if msec >= 0 else "-"
+    if val >= 60000:
+        timeStr += str( val // 60000 ) + ":"
+        val %= 60000
+    timeStr+= str(val // 1000)
+    timeStr+= "." + str(val % 1000).zfill(3)
+    return timeStr
