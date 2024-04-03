@@ -3,6 +3,8 @@
   image: $CI_REGISTRY_IMAGE/podman-compose:latest
   timeout: 1 hours
   script:
+    - podman login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - podman pull "$CI_REGISTRY_IMAGE/race-control:$CI_COMMIT_SHORT_SHA"
     - podman compose -f test-compose.yaml up --abort-on-container-exit || true
   allow_failure: true
   resource_group: test
