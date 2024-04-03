@@ -111,6 +111,11 @@ class messageManager:
                 value
                 for key, value in RCMessages.items()
             ]
+        
+        # skip messaging if session is archived
+        if self.sessionInfo["ArchiveStatus"]["Status"] == "Complete":
+            return
+        
         for content in RCMessages:
             if "Flag" in content and content["Flag"] == "BLUE":
                 continue;
@@ -135,6 +140,11 @@ class messageManager:
         if not self.sessionInfo["Type"] in ["Race", "Sprint"]:
             return
         pitLaneTimeCollection = msg["A"][1]["PitTimes"]
+        
+        # skip messaging if session is archived
+        if self.sessionInfo["ArchiveStatus"]["Status"] == "Complete":
+            return
+        
         for RacingNumber, pitLaneTime in pitLaneTimeCollection.items():
             if not RacingNumber in self.driverList:
                 continue
@@ -167,6 +177,11 @@ class messageManager:
     def liveTimingDataF1Handler(self, msg):
         compoundSymbol=self.msgStyle["compoundSymbol"]
         self.timingDataF1 = updateDictDelta(self.timingDataF1, msg["A"][1])
+        
+        # skip messaging if session is archived
+        if self.sessionInfo["ArchiveStatus"]["Status"] == "Complete":
+            return
+        
         for RacingNumber, stat in msg["A"][1]["Lines"].items():
             info = self.driverList[RacingNumber]
             if (
@@ -319,6 +334,11 @@ class messageManager:
         compoundSymbol=self.msgStyle["compoundSymbol"]
         prevFrame = copy.deepcopy(self.tyreStintSeries)
         self.tyreStintSeries = updateDictDelta(self.tyreStintSeries, msg["A"][1])
+        
+        # skip messaging if session is archived
+        if self.sessionInfo["ArchiveStatus"]["Status"] == "Complete":
+            return
+        
         if self.sessionInfo["Type"] not in ["Race", "Sprint"]:
             return
         for RacingNumber, driverStints in self.tyreStintSeries["Stints"].items():

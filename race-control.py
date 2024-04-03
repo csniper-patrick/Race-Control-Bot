@@ -67,7 +67,7 @@ async def connectRaceControl():
                                     , "RaceControlMessages"
                                     # , "TrackStatus" # redundant
                                     , "DriverList"
-                                    , "WeatherData" 
+                                    # , "WeatherData" 
                                     , "SessionInfo"
                                     , "TyreStintSeries" # tyre stints
                                     , "TimingDataF1" # purple, green lap and race leader
