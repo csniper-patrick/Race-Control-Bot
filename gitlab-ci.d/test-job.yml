@@ -88,8 +88,8 @@ test-monaco-race:
     SESSION_PATH: "2023/2023-05-28_Monaco_Grand_Prix/2023-05-28_Race/"
     MESSAGE_GAP: "0.03"
 
-test-las-vegas-race:
+test-australian-race:
   <<: *test-race-config
   variables:
-    SESSION_PATH: "2023/2023-11-18_Las_Vegas_Grand_Prix/2023-11-18_Race/"
+    SESSION_PATH: "2024/2024-03-24_Australian_Grand_Prix/2024-03-24_Race/"
     MESSAGE_GAP: "0.03"
