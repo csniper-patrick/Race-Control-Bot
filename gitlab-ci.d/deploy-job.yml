@@ -22,6 +22,6 @@ deploy-branch:
 deploy-stable:
   <<: *deployment-config
   script:
-    - ansible-playbook -l main playbook/01-deploy.yml
+    - ansible-playbook -l main playbook/01-deploy.yaml
   rules:
     - if: $CI_COMMIT_TAG
