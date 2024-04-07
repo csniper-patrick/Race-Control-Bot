@@ -140,7 +140,7 @@ class messageManager:
                 continue
             durationSec=reversed([ float(i) for i in re.split(':', pitLaneTime["Duration"]) ])
             durationSec=sum([ val * scaler for val, scaler in zip( durationSec, [1, 60] ) ])
-            if durationSec >= 30.0:
+            if durationSec >= 30.0 and durationSec <= 600.0:
                 info = self.driverList[RacingNumber]
                 self.discord.post(
                     username=f"{info['TeamName']}{self.tag}",
