@@ -20,13 +20,13 @@
         name: python3.11
 
     - name: copy files
-      copy:
+      synchronize:
         src: "../{{ item }}"
-        dest: "{{ venv_path }}"
+        dest: "{{ venv_path }}/"
       loop:
         - requirements.txt
         - race-control.py
-        - messageManager.py
+        - messageManager
       notify:
         - restart services
 
