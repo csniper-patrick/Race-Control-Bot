@@ -1,0 +1,13 @@
+services:
+  coverage-report:
+    image: docker.io/library/python:3.12
+    volumes:
+      - ./:/opt/
+    command:
+      - /bin/bash
+      - -cx
+      - >
+        cd /opt ;
+        find ./coverage;
+        python -m pip install coverage ;
+        [[ -z $(ls -A ./coverage) ]] || ( coverage combine ./coverage/data.* && coverage html --directory ./coverage-report ); 

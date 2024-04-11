@@ -8,6 +8,10 @@
     - podman compose -f test-compose.yaml up --abort-on-container-exit || true
   allow_failure: true
   resource_group: test
+  artifacts:
+    paths:
+      - ./coverage/data.*
+    expire_in: 1 week
 
 .test-practice: &test-practice-config
   <<: *test-job-config
@@ -87,8 +91,8 @@ test-monaco-race:
     SESSION_PATH: "2023/2023-05-28_Monaco_Grand_Prix/2023-05-28_Race/"
     MESSAGE_GAP: "0.03"
 
-test-japan-race:
+test-australian-race:
   <<: *test-race-config
   variables:
-    SESSION_PATH: "2024/2024-04-07_Japanese_Grand_Prix/2024-04-07_Race/"
+    SESSION_PATH: "2024/2024-03-24_Australian_Grand_Prix/2024-03-24_Race/"
     MESSAGE_GAP: "0.03"
