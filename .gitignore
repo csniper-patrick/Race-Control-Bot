@@ -1,5 +1,6 @@
 .env
 **.log
+**.pyc
 **/__pycache__/**
 /.venv/**
 /live-racectl-msg-*/**
