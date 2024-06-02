@@ -3,7 +3,7 @@
   stage: deploy
   before_script:
     - yum install -y epel-release
-    - yum install -y ansible openssh-clients
+    - yum install -y ansible openssh-clients rsync
     - mkdir -pv ~/.ssh/
     - cp ${SSH_KEY_PRI} ~/.ssh/id_rsa
     - chmod 0600 ~/.ssh/id_rsa
