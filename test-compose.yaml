@@ -32,9 +32,10 @@ services:
     command:
       - /bin/sh
       - -c
-      - sleep 10 && python race-control.py
-    volumes:
-      - ./:/opt
+      - >
+        sleep 10 ;
+        python -m pip install coverage ;
+        coverage run --data-file=/opt/coverage/data --parallel-mode race-control.py ;
     environment:
       - VERBOSE=${VERBOSE:-False}
       - DISCORD_WEBHOOK=${DISCORD_WEBHOOK}
@@ -44,6 +45,8 @@ services:
       - VER_TAG=${CI_JOB_ID:-local}
       - RACE_DIRECTOR=${RACE_DIRECTOR:-Race Director}
       - MSG_STYLE=${MSG_STYLE}
+    volumes:
+      - ./coverage/:/opt/coverage/
     depends_on:
       signalr:
         condition: service_healthy

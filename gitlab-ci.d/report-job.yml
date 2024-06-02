@@ -1,0 +1,12 @@
+coverage-report:
+  stage: report
+  image: $CI_REGISTRY_IMAGE/podman-compose:latest
+  script:
+    - podman login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - podman compose -f coverage-report.yaml up 
+  artifacts:
+    paths:
+      - ./coverage-report
+    expire_in: 1 week
+  only:
+    - /^test-.*$/

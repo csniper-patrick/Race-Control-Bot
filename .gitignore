@@ -1,8 +1,10 @@
 .env
 **.log
-/__pycache__/**
+**.pyc
+**/__pycache__/**
 /.venv/**
 /live-racectl-msg-*/**
 ansible.cfg
 inventory.ini
 /reference/**
+/coverage/*
