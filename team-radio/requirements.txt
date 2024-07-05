@@ -4,4 +4,4 @@ websockets
 discordwebhook
 python-dotenv
 wget
-whisper_at
+transformers
