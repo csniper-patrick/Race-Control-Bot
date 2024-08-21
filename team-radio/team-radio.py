@@ -7,7 +7,7 @@ import urllib.parse
 from urllib.parse import urljoin
 from functools import reduce
 import os
-import whisper_at as whisper
+from transformers import pipeline
 import wget
 from dotenv import load_dotenv
 from discordwebhook import Discord
@@ -19,22 +19,25 @@ api_host = os.getenv("API_HOST", default="livetiming.formula1.com")
 retry = (os.getenv("RETRY", default="True")) == "True"
 
 # livetimingUrl = f"https://{api_host}/signalr" if use_ssl == "true" else f"http://{api_host}/signalr"
-livetimingUrl = urljoin(f"https://{api_host}"if use_ssl else f"http://{api_host}", "/signalr")
+livetimingUrl = urljoin(
+    f"https://{api_host}"if use_ssl else f"http://{api_host}", "/signalr")
 
 # websocketUrl  = f"wss://{api_host}/signalr"   if use_ssl == "true" else f"ws://{api_host}/signalr"
-websocketUrl  = urljoin(f"wss://{api_host}"if use_ssl else f"ws://{api_host}", "/signalr")
+websocketUrl = urljoin(
+    f"wss://{api_host}"if use_ssl else f"ws://{api_host}", "/signalr")
 
 # staticUrl     = f"https://{api_host}/static"  if use_ssl == "true" else f"http://{api_host}/static"
 # staticUrl     = urljoin(f"https://{api_host}"if use_ssl else f"http://{api_host}", "/static")
-staticUrl     = "https://livetiming.formula1.com/static"
+staticUrl = "https://livetiming.formula1.com/static"
 
 # suffix
-tag=os.getenv("VER_TAG")
+tag = os.getenv("VER_TAG")
 
-clientProtocol= 1.5
+clientProtocol = 1.5
+
 
 def negotiate():
-    connectionData=[{"name": "Streaming"}]
+    connectionData = [{"name": "Streaming"}]
     try:
         res = requests.get(
             f'{livetimingUrl}/negotiate',
@@ -48,11 +51,13 @@ def negotiate():
     except:
         print("error")
 
+
 async def connectRaceControl():
     print(staticUrl)
     # Initialize model
-    audio_tagging_time_resolution = 10
-    model = whisper.load_model(os.getenv("WHISPERS_MODEL", default="base.en"))
+    model = os.getenv("WHISPERS_MODEL",
+                      default="distil-whisper/distil-small.en")
+    transcriber = pipeline("automatic-speech-recognition", model=model)
 
     while True:
         data, headers = negotiate()
@@ -62,7 +67,7 @@ async def connectRaceControl():
             "connectionToken": data["ConnectionToken"],
             "connectionData": json.dumps([{"name": "Streaming"}])
         })
-        extra_headers={
+        extra_headers = {
             "User-Agent": "BestHTTP",
             "Accept-Encoding": "gzip,identity",
             "Cookie": headers["Set-Cookie"]
@@ -87,43 +92,45 @@ async def connectRaceControl():
                 SessionInfo = {}
                 DriverList = {}
 
-                while messages := await sock.recv() :
+                while messages := await sock.recv():
                     messages = json.loads(messages)
-                    if verbose and bool(messages): 
-                        print(json.dumps(messages,indent=4))
+                    if verbose and bool(messages):
+                        print(json.dumps(messages, indent=4))
 
                     # process reference data (R type)
-                    if "R" in messages: 
+                    if "R" in messages:
                         if "SessionInfo" in messages["R"]:
                             SessionInfo = messages["R"]["SessionInfo"]
                         if "DriverList" in messages["R"]:
                             DriverList = messages["R"]["DriverList"]
-                        
+
                     # process live data (M type)
                     if "M" in messages:
-                        for msg in messages["M"] :
-                            if msg["H"] == "Streaming" and msg["A"][0] == "DriverList" :
+                        for msg in messages["M"]:
+                            if msg["H"] == "Streaming" and msg["A"][0] == "DriverList":
                                 # update driver information
                                 DriverList = msg["A"][1]
-                            elif msg["H"] == "Streaming" and msg["A"][0] == "SessionInfo" :
+                            elif msg["H"] == "Streaming" and msg["A"][0] == "SessionInfo":
                                 # update driver information
                                 SessionInfo = msg["A"][1]
-                        
+
                         for msg in messages["M"]:
-                            if msg["H"] == "Streaming" and msg["A"][0] == "TeamRadio" and "Captures" in msg["A"][1] :
+                            if msg["H"] == "Streaming" and msg["A"][0] == "TeamRadio" and "Captures" in msg["A"][1]:
                                 captures = msg["A"][1]["Captures"]
                                 # list
                                 if type(captures) == dict:
-                                    captures = [ capture for _, capture in captures.items()]
+                                    captures = [capture for _,
+                                                capture in captures.items()]
                                 if type(captures) == list:
                                     for capture in captures:
                                         if capture["RacingNumber"] not in DriverList:
                                             continue
                                         info = DriverList[capture["RacingNumber"]]
-                                        radioURL= reduce(urljoin, [ staticUrl, SessionInfo['Path'], capture['Path'] ])
+                                        radioURL = reduce(
+                                            urljoin, [staticUrl, SessionInfo['Path'], capture['Path']])
                                         print(radioURL)
                                         radioFile = wget.download(radioURL)
-                                        transcribe = model.transcribe(radioFile, at_time_res=audio_tagging_time_resolution)
+                                        transcribe = transcriber(radioFile)
                                         discord.post(
                                             username=f"{info['Tla']} - {info['RacingNumber']}",
                                             avatar_url=info["HeadshotUrl"] if "HeadshotUrl" in info else None,
@@ -138,8 +145,10 @@ async def connectRaceControl():
                 else:
                     break
 
+
 def main():
     asyncio.get_event_loop().run_until_complete(connectRaceControl())
+
 
 if __name__ == "__main__":
     main()
